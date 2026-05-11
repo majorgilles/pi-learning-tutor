@@ -34,7 +34,7 @@ While learning mode is active, the extension:
 - transforms readiness signals like `done`, `review`, or `I tried it` into review prompts,
 - asks the assistant to inspect relevant files/diffs before reviewing,
 - supports `/define` and `ctrl+shift+d` definition overlays,
-- enables left-drag term selection for quick definitions only while learning mode is active, and
+- enables left-drag term selection for quick definitions or copying selected text to the clipboard only while learning mode is active, and
 - supports an explicit two-step edit-mode escape hatch.
 
 See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for the original implementation checklist.

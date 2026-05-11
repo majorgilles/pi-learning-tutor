@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, statSync } from "node:fs";
 import { extname, join } from "node:path";
 import { complete, getModel } from "@earendil-works/pi-ai";
@@ -505,8 +506,11 @@ async function askModelForDefinition(
   }
 
   const auth = await ctx.modelRegistry.getApiKeyAndHeaders(currentModel);
-  if (!auth.ok || !auth.apiKey) {
-    return `Could not call the model for a definition${auth.ok ? "" : `: ${auth.error}`}.\n\nTerm: **${text}**`;
+  if (auth.ok === false) {
+    return `Could not call the model for a definition: ${auth.error}.\n\nTerm: **${text}**`;
+  }
+  if (!auth.apiKey) {
+    return `Could not call the model for a definition: no API key was available.\n\nTerm: **${text}**`;
   }
 
   const language = detectCurrentLanguage(ctx.cwd);
@@ -586,6 +590,11 @@ type MouseEvent = {
 };
 
 type MousePoint = { col: number; row: number };
+type DefineSelectionAction = "define" | "copy" | "cancel";
+type DefineSelectionOption = 0 | 1 | 2;
+
+const DEFINE_SELECTION_POPUP_WIDTH = 48;
+const DEFINE_SELECTION_POPUP_HEIGHT = 9;
 
 type SelectionSupport = {
   uninstall?: () => void;
@@ -700,6 +709,79 @@ function installSelectionDefineSupport(
   return support;
 }
 
+type ClipboardResult = { ok: true } | { ok: false; error: string };
+
+function runClipboardCommand(
+  command: string,
+  args: string[],
+  text: string,
+): ClipboardResult {
+  const result = spawnSync(command, args, {
+    input: text,
+    encoding: "utf8",
+    windowsHide: true,
+  });
+  if (result.error) return { ok: false, error: result.error.message };
+  if (result.status === 0) return { ok: true };
+  const stderr = typeof result.stderr === "string" ? result.stderr.trim() : "";
+  return {
+    ok: false,
+    error: stderr || `${command} exited with status ${result.status ?? "unknown"}`,
+  };
+}
+
+function copyViaOsc52(text: string): ClipboardResult {
+  if (!process.stdout.isTTY) {
+    return { ok: false, error: "terminal clipboard is unavailable" };
+  }
+  const encoded = Buffer.from(text, "utf8").toString("base64");
+  process.stdout.write(`\x1b]52;c;${encoded}\x07`);
+  return { ok: true };
+}
+
+function copyTextToClipboard(text: string): ClipboardResult {
+  const attempts: Array<[string, string[]]> =
+    process.platform === "win32"
+      ? [
+          [
+            "pwsh.exe",
+            [
+              "-NoProfile",
+              "-NonInteractive",
+              "-Command",
+              "Set-Clipboard -Value ([Console]::In.ReadToEnd())",
+            ],
+          ],
+          [
+            "powershell.exe",
+            [
+              "-NoProfile",
+              "-NonInteractive",
+              "-Command",
+              "Set-Clipboard -Value ([Console]::In.ReadToEnd())",
+            ],
+          ],
+          ["clip.exe", []],
+        ]
+      : process.platform === "darwin"
+        ? [["pbcopy", []]]
+        : [
+            ["wl-copy", []],
+            ["xclip", ["-selection", "clipboard"]],
+            ["xsel", ["--clipboard", "--input"]],
+          ];
+
+  let lastError = "no clipboard command was available";
+  for (const [command, args] of attempts) {
+    const result = runClipboardCommand(command, args, text);
+    if (result.ok === true) return result;
+    lastError = result.error;
+  }
+
+  const osc52 = copyViaOsc52(text);
+  return osc52.ok === true ? osc52 : { ok: false, error: lastError };
+}
+
 async function promptDefineSelection(
   ctx: ExtensionContext,
   state: LearningState,
@@ -710,8 +792,16 @@ async function promptDefineSelection(
   if (support.busy || !ctx.hasUI) return;
   support.busy = true;
   try {
-    const shouldDefine = await showDefineSelectionPopup(ctx, text, point);
-    if (!shouldDefine) return;
+    const action = await showDefineSelectionPopup(ctx, text, point);
+    if (action === "cancel") return;
+    if (action === "copy") {
+      const copied = copyTextToClipboard(text);
+      ctx.ui.notify(
+        copied.ok === true ? "Copied selected text to clipboard" : `Copy failed: ${copied.error}`,
+        copied.ok === true ? "info" : "warning",
+      );
+      return;
+    }
     ctx.ui.notify("Preparing definition overlay...", "info");
     const definition = await askModelForDefinition(ctx, state, text);
     await showDefinitionOverlay(ctx, text, definition);
@@ -724,16 +814,16 @@ async function showDefineSelectionPopup(
   ctx: ExtensionContext,
   text: string,
   point?: MousePoint,
-): Promise<boolean> {
-  const width = 46;
-  const height = 8;
+): Promise<DefineSelectionAction> {
+  const width = DEFINE_SELECTION_POPUP_WIDTH;
+  const height = DEFINE_SELECTION_POPUP_HEIGHT;
   const termCols = process.stdout.columns || 100;
   const termRows = process.stdout.rows || 30;
   const cursorRow = Math.max(0, (point?.row ?? termRows) - 1);
   const cursorCol = Math.max(0, (point?.col ?? 1) - 1);
   const row = cursorRow + height < termRows ? cursorRow + 1 : Math.max(0, cursorRow - height);
   const col = cursorCol + width < termCols ? cursorCol + 1 : Math.max(0, cursorCol - width);
-  return await ctx.ui.custom<boolean>(
+  return await ctx.ui.custom<DefineSelectionAction>(
     (_tui, theme, _keybindings, done) =>
       new DefineSelectionPopup(theme, text, done, { row, col }),
     {
@@ -750,14 +840,15 @@ async function showDefineSelectionPopup(
 }
 
 class DefineSelectionPopup {
-  private selected: 0 | 1 = 0;
+  private selected: DefineSelectionOption = 0;
+  private pressedOption: DefineSelectionOption | undefined;
   private lastClickAt = 0;
-  private lastClickOption: 0 | 1 | undefined;
+  private lastClickOption: DefineSelectionOption | undefined;
 
   constructor(
     private theme: Theme,
     private text: string,
-    private done: (result: boolean) => void,
+    private done: (result: DefineSelectionAction) => void,
     private position: { row: number; col: number },
   ) {}
 
@@ -768,52 +859,78 @@ class DefineSelectionPopup {
       return;
     }
 
-    if (matchesKey(data, "escape") || data === "q") this.done(false);
-    else if (matchesKey(data, "return") || matchesKey(data, "enter")) this.done(this.selected === 0);
-    else if (matchesKey(data, "up") || matchesKey(data, "down") || data === "j" || data === "k") {
-      this.selected = this.selected === 0 ? 1 : 0;
-    } else if (data === "d") this.done(true);
+    if (matchesKey(data, "escape") || data === "q") this.done("cancel");
+    else if (matchesKey(data, "return") || matchesKey(data, "enter")) {
+      this.done(this.actionFor(this.selected));
+    } else if (matchesKey(data, "up") || data === "k") this.moveSelection(-1);
+    else if (matchesKey(data, "down") || data === "j") this.moveSelection(1);
+    else if (data === "d") this.done("define");
+    else if (data === "c") this.done("copy");
   }
 
   private handleMouse(mouse: MouseEvent): void {
-    if (!mouse.release || (mouse.button & 3) !== 0) return;
+    const button = mouse.button & 3;
     const option = this.optionAt(mouse.row, mouse.col);
+
+    if (!mouse.release && !mouse.motion && button === 0) {
+      this.pressedOption = option;
+      return;
+    }
+
+    if (!mouse.release || (button !== 0 && button !== 3)) return;
     if (option === undefined) return;
+    if (this.pressedOption !== undefined && this.pressedOption !== option) {
+      this.pressedOption = undefined;
+      return;
+    }
+    this.pressedOption = undefined;
 
     const now = Date.now();
-    const isDoubleClick = this.lastClickOption === option && now - this.lastClickAt < 450;
+    const isDoubleClick = this.lastClickOption === option && now - this.lastClickAt < 500;
     this.selected = option;
     this.lastClickOption = option;
     this.lastClickAt = now;
-    if (isDoubleClick) this.done(option === 0);
+    if (isDoubleClick) this.done(this.actionFor(option));
   }
 
-  private optionAt(row: number, col: number): 0 | 1 | undefined {
+  private moveSelection(delta: -1 | 1): void {
+    this.selected = ((this.selected + delta + 3) % 3) as DefineSelectionOption;
+  }
+
+  private actionFor(option: DefineSelectionOption): DefineSelectionAction {
+    if (option === 0) return "define";
+    if (option === 1) return "copy";
+    return "cancel";
+  }
+
+  private optionAt(row: number, col: number): DefineSelectionOption | undefined {
     const localRow = row - this.position.row - 1;
     const localCol = col - this.position.col - 1;
-    if (localCol < 0 || localCol > 46) return undefined;
+    if (localCol < 0 || localCol >= DEFINE_SELECTION_POPUP_WIDTH) return undefined;
     if (localRow === 4) return 0;
     if (localRow === 5) return 1;
+    if (localRow === 6) return 2;
     return undefined;
   }
 
   render(width: number): string[] {
-    const w = Math.max(38, Math.min(width, 46));
+    const w = Math.max(40, Math.min(width, DEFINE_SELECTION_POPUP_WIDTH));
     const inner = w - 2;
     const preview = this.text.replace(/\s+/g, " ").slice(0, inner - 4);
     const pad = (s: string) => s + " ".repeat(Math.max(0, inner - visibleWidth(s)));
     const row = (s = "") => `${this.theme.fg("border", "│")}${pad(truncateToWidth(s, inner, "…"))}${this.theme.fg("border", "│")}`;
-    const option = (idx: 0 | 1, label: string) =>
+    const option = (idx: DefineSelectionOption, label: string) =>
       row(` ${idx === this.selected ? this.theme.fg("accent", "›") : " "} ${label}`);
 
     return [
       this.theme.fg("border", `╭${"─".repeat(inner)}╮`),
-      row(` ${this.theme.fg("accent", "Define selected text?")}`),
+      row(` ${this.theme.fg("accent", "Use selected text?")}`),
       row(` “${preview}”`),
       row(""),
       option(0, "Define in learning overlay"),
-      option(1, "Cancel"),
-      row(` ${this.theme.fg("dim", "Enter confirms • double-click option")}`),
+      option(1, "Copy selected text"),
+      option(2, "Cancel"),
+      row(` ${this.theme.fg("dim", "Enter/d/c • double-click option")}`),
       this.theme.fg("border", `╰${"─".repeat(inner)}╯`),
     ];
   }

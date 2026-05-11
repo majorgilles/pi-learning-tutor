@@ -32,6 +32,7 @@
    - Support left-drag terminal selection only while learning mode is active: after selecting visible text, show a confirmation popup next to the selection, then open the overlay.
    - Disable the mouse-selection capture again when learning mode is turned off or the session shuts down.
    - Allow keyboard confirmation and double-clicking the popup option.
+   - Offer a second popup action to copy the raw selected text to the clipboard and close the popup.
    - Make definition overlays scrollable with ↑/↓, PgUp/PgDn, j/k, and Space.
 
 6. **Edit mode escape hatch**
