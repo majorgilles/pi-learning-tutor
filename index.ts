@@ -666,6 +666,7 @@ function installSelectionDefineSupport(
 
   if (process.stdout.isTTY) process.stdout.write(MOUSE_TRACKING_ON);
   support.uninstall = ctx.ui.onTerminalInput((data) => {
+    if (!stateRef().active) return undefined;
     const mouse = parseSgrMouse(data);
     if (!mouse) return undefined;
     if (support.busy) return undefined;
@@ -898,6 +899,19 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
   let previousActiveTools: string[] | undefined;
   let selectionSupport: SelectionSupport | undefined;
 
+  function enableSelectionSupport(ctx: ExtensionContext): void {
+    if (!ctx.hasUI || selectionSupport) return;
+    selectionSupport = installSelectionDefineSupport(ctx, () => state);
+  }
+
+  function disableSelectionSupport(ctx?: ExtensionContext): void {
+    const hadSupport = Boolean(selectionSupport);
+    selectionSupport?.uninstall?.();
+    selectionSupport = undefined;
+    ctx?.ui.setWidget("learning-tutor-selection-capture", undefined);
+    if (hadSupport && process.stdout.isTTY) process.stdout.write(MOUSE_TRACKING_OFF);
+  }
+
   function enableLearning(ctx: ExtensionContext, goal: string): void {
     if (!state.active) previousActiveTools = pi.getActiveTools();
     state = {
@@ -907,6 +921,7 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
       editMode: { phase: "off" },
     };
     pi.setActiveTools(safeToolNames(pi));
+    enableSelectionSupport(ctx);
     updateStatus(ctx, state);
     persist(pi, state);
   }
@@ -915,25 +930,24 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
     state = { ...state, active: false, editMode: { phase: "off" } };
     if (previousActiveTools?.length) pi.setActiveTools(previousActiveTools);
     previousActiveTools = undefined;
+    disableSelectionSupport(ctx);
     updateStatus(ctx, state);
     persist(pi, state);
   }
 
   pi.on("session_start", async (_event, ctx) => {
+    disableSelectionSupport(ctx);
     state = restoreState(ctx);
-    selectionSupport?.uninstall?.();
-    selectionSupport = ctx.hasUI ? installSelectionDefineSupport(ctx, () => state) : undefined;
     if (state.active) {
       previousActiveTools = pi.getActiveTools();
       pi.setActiveTools(safeToolNames(pi));
+      enableSelectionSupport(ctx);
     }
     updateStatus(ctx, state);
   });
 
   pi.on("session_shutdown", async () => {
-    selectionSupport?.uninstall?.();
-    selectionSupport = undefined;
-    if (process.stdout.isTTY) process.stdout.write(MOUSE_TRACKING_OFF);
+    disableSelectionSupport();
   });
 
   pi.registerCommand("learn", {

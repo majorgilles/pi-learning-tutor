@@ -29,7 +29,8 @@
    - Implement `/define <text>` using the active model directly from the extension.
    - Render the result in a Pi overlay, not as a normal chat message.
    - Add a keyboard shortcut fallback for quick definitions.
-   - Support left-drag terminal selection: after selecting visible text, show a confirmation popup next to the selection, then open the overlay.
+   - Support left-drag terminal selection only while learning mode is active: after selecting visible text, show a confirmation popup next to the selection, then open the overlay.
+   - Disable the mouse-selection capture again when learning mode is turned off or the session shuts down.
    - Allow keyboard confirmation and double-clicking the popup option.
    - Make definition overlays scrollable with ↑/↓, PgUp/PgDn, j/k, and Space.
 

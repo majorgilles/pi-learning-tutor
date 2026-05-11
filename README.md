@@ -5,13 +5,13 @@ A pi extension that turns a conversation into a learner-owned tutoring thread. I
 ## Install
 
 ```bash
-pi install git:github.com/majorgilles/pi-learning-tutor
+pi install npm:@majorgilles/pi-learning-tutor
 ```
 
 For a one-off run without adding it to settings:
 
 ```bash
-pi -e git:github.com/majorgilles/pi-learning-tutor
+pi -e npm:@majorgilles/pi-learning-tutor
 ```
 
 ## Commands
@@ -33,7 +33,8 @@ While learning mode is active, the extension:
 - blocks `edit`, `write`, and mutating bash commands by default,
 - transforms readiness signals like `done`, `review`, or `I tried it` into review prompts,
 - asks the assistant to inspect relevant files/diffs before reviewing,
-- supports `/define` and `ctrl+shift+d` definition overlays, and
+- supports `/define` and `ctrl+shift+d` definition overlays,
+- enables left-drag term selection for quick definitions only while learning mode is active, and
 - supports an explicit two-step edit-mode escape hatch.
 
 See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for the original implementation checklist.
