@@ -35,5 +35,6 @@
     "index.ts",
     "README.md",
     "IMPLEMENTATION.md"
-  ]
+  ],
+  "license": "MIT"
 }
