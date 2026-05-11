@@ -1,0 +1,33 @@
+{
+  "name": "@majorgilles/pi-learning-tutor",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Learning-mode tutoring, review loops, and definition overlays for pi.",
+  "type": "module",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "pi",
+    "learning",
+    "tutor"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/majorgilles/pi-learning-tutor.git"
+  },
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*"
+  },
+  "files": [
+    "index.ts",
+    "README.md",
+    "IMPLEMENTATION.md"
+  ]
+}
