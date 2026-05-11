@@ -403,6 +403,8 @@ Current language hint:
 Default behavior:
 - Optimize for durable learning, not fast task completion.
 - Accept arbitrary context. Do NOT assume the input is a GitHub issue or any fixed format.
+- If the learner's context includes resources (for example tutorial links, docs, reference repos, blog posts, or a GitHub issue that links to them), treat those resources as the learning blueprint: inspect/fetch the relevant resource when useful, extract the target pattern/API/architecture, and guide the learner to replicate an analogous implementation in their project rather than inventing an unrelated approach.
+- When following a resource blueprint, make the mapping explicit: "resource shows X; in this codebase that corresponds to Y". Keep adaptations scoped to the local project and explain any intentional deviations.
 - Give one small learner-owned next step at a time.
 - Before asking the learner to type code or commands, present the underlying concepts so they understand WHY the step matters.
 - Name 1-3 concepts for the current step, explain each in learner-friendly language, and tie each concept directly to the exact code/command they are about to type.
@@ -1118,7 +1120,7 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
       await sendAsUser(
         pi,
         ctx,
-        `[START LEARNING THREAD]\n\nUser-provided context can be any format; do not assume a GitHub issue.\n\nContext:\n${trimmed}\n\nStart by orienting me, optionally inspect bounded context if useful, then explain the concepts behind the work and give me one small learner-owned next step.`,
+        `[START LEARNING THREAD]\n\nUser-provided context can be any format; do not assume a GitHub issue. If the context includes resources such as tutorial links, docs, reference repos, blog posts, or linked resources inside a GitHub issue, use them as the blueprint: inspect/fetch the relevant resource when useful, extract the target pattern, and help me replicate an analogous implementation in this project.\n\nContext:\n${trimmed}\n\nStart by orienting me, optionally inspect bounded context/resources if useful, then explain the concepts behind the work and give me one small learner-owned next step.`,
       );
     },
   });
@@ -1140,7 +1142,7 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
       await sendAsUser(
         pi,
         ctx,
-        `[LEARNING EXERCISE REQUEST]\n\nCreate a small practice exercise${args.trim() ? ` about: ${args.trim()}` : " based on the current learning context"}. Make it logical for my current context. Include the concepts being practiced, why those concepts matter, the goal, constraints, hints, and how I should ask for review. Do not provide the solution.`,
+        `[LEARNING EXERCISE REQUEST]\n\nCreate a small practice exercise${args.trim() ? ` about: ${args.trim()}` : " based on the current learning context"}. If the current context includes a tutorial/docs/reference resource, base the exercise on replicating or adapting one small pattern from that resource in this project. Make it logical for my current context. Include the concepts being practiced, why those concepts matter, the goal, constraints, hints, and how I should ask for review. Do not provide the solution.`,
       );
     },
   });
@@ -1278,15 +1280,23 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
     return { action: "continue" };
   });
 
-  pi.on("before_agent_start", async (_event, ctx) => {
+  pi.on("before_agent_start", async (event, ctx) => {
     if (!state.active) return;
     return {
-      message: {
-        customType: CONTEXT_CUSTOM_TYPE,
-        content: learningInstructions(state, detectCurrentLanguage(ctx.cwd)),
-        display: false,
-      },
+      systemPrompt: `${event.systemPrompt}\n\n${learningInstructions(
+        state,
+        detectCurrentLanguage(ctx.cwd),
+      )}`,
     };
+  });
+
+  pi.on("context", async (event) => {
+    const messages = event.messages.filter(
+      (message: any) =>
+        !(message?.role === "custom" && message.customType === CONTEXT_CUSTOM_TYPE),
+    );
+    if (messages.length === event.messages.length) return;
+    return { messages };
   });
   pi.on("tool_call", async (event) => {
     if (!state.active) return;
