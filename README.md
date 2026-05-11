@@ -35,9 +35,9 @@ While learning mode is active, the extension:
 - transforms readiness signals like `done`, `review`, or `I tried it` into review prompts,
 - asks the assistant to inspect relevant files/diffs before reviewing,
 - supports `/define` and `ctrl+shift+d` definition overlays,
-- leaves native terminal text selection/copy behavior alone, and
+- opens a small “define/copy/cancel” popup when you drag-select terminal text in learning mode, and
 - supports an explicit two-step edit-mode escape hatch.
 
-Tip: select/copy any terminal text normally, then run `/define` to define the clipboard contents.
+Tip: while learning mode is active, drag-select text to open the popup. Use `/define` as a clipboard/manual fallback.
 
 See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for the original implementation checklist.

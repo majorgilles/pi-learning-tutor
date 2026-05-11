@@ -29,7 +29,7 @@
    - Implement `/define <text>` using the active model directly from the extension.
    - Render the result in a Pi overlay, not as a normal chat message.
    - Add a keyboard shortcut fallback for quick definitions.
-   - Preserve native terminal text selection/copy behavior; do not enable mouse capture for drag-to-define.
+   - Enable mouse drag selection in learning mode to show a define/copy/cancel popup.
    - When `/define` is run without arguments, read clipboard text first and fall back to prompting.
    - Make definition overlays scrollable with ↑/↓, PgUp/PgDn, j/k, and Space.
 
@@ -40,7 +40,7 @@
 
 ## Follow-up investigations
 
-- Improve selection UX/visual highlighting if Pi exposes a first-class terminal selection API later.
+- Improve selection UX/visual highlighting and native-selection coexistence if Pi exposes a first-class terminal selection API later.
 - Improve bash read-only classification.
 - Add richer custom renderers for tutor steps/reviews.
 - Add optional glossary/profile later, behind explicit user opt-in.

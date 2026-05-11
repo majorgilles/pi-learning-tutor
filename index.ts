@@ -1053,11 +1053,9 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
   let state: LearningState = cloneState(DEFAULT_STATE);
   let selectionSupport: SelectionSupport | undefined;
 
-  function enableSelectionSupport(_ctx: ExtensionContext): void {
-    // Disabled by design: enabling terminal mouse tracking interferes with native
-    // multi-line terminal selection/copy. Use `/define` with copied clipboard text
-    // instead of capturing mouse drags inside the extension.
-    return;
+  function enableSelectionSupport(ctx: ExtensionContext): void {
+    if (!ctx.hasUI || selectionSupport) return;
+    selectionSupport = installSelectionDefineSupport(ctx, () => state);
   }
 
   function disableSelectionSupport(ctx?: ExtensionContext): void {
