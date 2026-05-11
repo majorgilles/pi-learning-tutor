@@ -779,6 +779,47 @@ function copyTextToClipboard(text: string): ClipboardResult {
   return osc52.ok === true ? osc52 : { ok: false, error: lastError };
 }
 
+type ClipboardTextResult = { ok: true; text: string } | { ok: false; error: string };
+
+function readClipboardCommand(command: string, args: string[]): ClipboardTextResult {
+  const result = spawnSync(command, args, {
+    encoding: "utf8",
+    windowsHide: true,
+  });
+  if (result.error) return { ok: false, error: result.error.message };
+  if (result.status === 0) return { ok: true, text: String(result.stdout ?? "") };
+  const stderr = typeof result.stderr === "string" ? result.stderr.trim() : "";
+  return {
+    ok: false,
+    error: stderr || `${command} exited with status ${result.status ?? "unknown"}`,
+  };
+}
+
+function readTextFromClipboard(): ClipboardTextResult {
+  const attempts: Array<[string, string[]]> =
+    process.platform === "win32"
+      ? [
+          ["pwsh.exe", ["-NoProfile", "-NonInteractive", "-Command", "Get-Clipboard -Raw"]],
+          ["powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", "Get-Clipboard -Raw"]],
+        ]
+      : process.platform === "darwin"
+        ? [["pbpaste", []]]
+        : [
+            ["termux-clipboard-get", []],
+            ["wl-paste", ["--no-newline"]],
+            ["xclip", ["-selection", "clipboard", "-o"]],
+            ["xsel", ["--clipboard", "--output"]],
+          ];
+
+  let lastError = "no clipboard command was available";
+  for (const [command, args] of attempts) {
+    const result = readClipboardCommand(command, args);
+    if (result.ok === true) return result;
+    lastError = result.error;
+  }
+  return { ok: false, error: lastError };
+}
+
 async function promptDefineSelection(
   ctx: ExtensionContext,
   state: LearningState,
@@ -1012,9 +1053,11 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
   let state: LearningState = cloneState(DEFAULT_STATE);
   let selectionSupport: SelectionSupport | undefined;
 
-  function enableSelectionSupport(ctx: ExtensionContext): void {
-    if (!ctx.hasUI || selectionSupport) return;
-    selectionSupport = installSelectionDefineSupport(ctx, () => state);
+  function enableSelectionSupport(_ctx: ExtensionContext): void {
+    // Disabled by design: enabling terminal mouse tracking interferes with native
+    // multi-line terminal selection/copy. Use `/define` with copied clipboard text
+    // instead of capturing mouse drags inside the extension.
+    return;
   }
 
   function disableSelectionSupport(ctx?: ExtensionContext): void {
@@ -1118,14 +1161,21 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
 
   pi.registerCommand("define", {
     description:
-      "Define a word/sentence in an overlay without adding it to main chat context",
+      "Define text in an overlay. With no args, reads the clipboard first.",
     handler: async (args, ctx) => {
+      const explicitText = args.trim();
+      const clipboard = explicitText ? undefined : readTextFromClipboard();
+      const clipboardText = clipboard?.ok === true ? clipboard.text.trim() : "";
       const text =
-        args.trim() ||
+        explicitText ||
+        clipboardText ||
         (
           await ctx.ui.input("Define what word or sentence?", "borrow checker")
         )?.trim();
       if (!text) return;
+      if (!explicitText && clipboard && clipboard.ok === false) {
+        ctx.ui.notify(`Could not read clipboard: ${clipboard.error}`, "warning");
+      }
       ctx.ui.notify("Preparing definition overlay...", "info");
       const definition = await askModelForDefinition(ctx, state, text);
       await showDefinitionOverlay(ctx, text, definition);

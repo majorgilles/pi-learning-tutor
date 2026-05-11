@@ -20,7 +20,7 @@ pi -e npm:@majorgilles/pi-learning-tutor
 - `/learn done`, `/learn off`, `/learn stop` — leave learning mode.
 - `/exercise [topic]` — generate a small context-relevant practice exercise without the solution.
 - `/review [scope]` — request a broader learning review.
-- `/define <text>` — show a definition in an overlay without adding it to main chat context.
+- `/define [text]` — show a definition in an overlay without adding it to main chat context. With no text, reads the clipboard first, then prompts if the clipboard is unavailable/empty.
 - `/edit-mode <request>` — ask the assistant to draft a patch without applying it.
 - `/edit-mode apply` — explicitly approve applying the previously drafted patch.
 
@@ -35,9 +35,9 @@ While learning mode is active, the extension:
 - transforms readiness signals like `done`, `review`, or `I tried it` into review prompts,
 - asks the assistant to inspect relevant files/diffs before reviewing,
 - supports `/define` and `ctrl+shift+d` definition overlays,
-- enables left-drag term selection in Pi's live TUI viewport for quick definitions or copying selected text to the clipboard only while learning mode is active, and
+- leaves native terminal text selection/copy behavior alone, and
 - supports an explicit two-step edit-mode escape hatch.
 
-Note: left-drag definition popups work inside Pi's active TUI viewport. Native terminal scrollback is handled by the terminal emulator and does not deliver mouse events to Pi extensions; copy scrollback text and use `/define <text>` instead.
+Tip: select/copy any terminal text normally, then run `/define` to define the clipboard contents.
 
 See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for the original implementation checklist.
