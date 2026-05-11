@@ -12,7 +12,7 @@
 2. **Hard learning gate**
    - Disable/avoid mutating tools while learning mode is active.
    - Block `edit`/`write` tool calls.
-   - Block mutating bash commands; allow bounded read-only inspection.
+   - Block mutating bash commands; allow bounded local inspection and full external/research tool access.
 
 3. **Learner-signal review loop**
    - Detect readiness signals like `done`, `review`, `I tried it`.

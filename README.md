@@ -30,11 +30,14 @@ While learning mode is active, the extension:
 
 - injects tutor-mode instructions into the agent context,
 - prefers one small learner-owned next step at a time,
+- keeps all external/research tools available (for example web/code search, fetch tools, MCP tools, `gh`, `curl`, or small URL-fetch scripts) without requiring extra permission,
 - blocks `edit`, `write`, and mutating bash commands by default,
 - transforms readiness signals like `done`, `review`, or `I tried it` into review prompts,
 - asks the assistant to inspect relevant files/diffs before reviewing,
 - supports `/define` and `ctrl+shift+d` definition overlays,
-- enables left-drag term selection for quick definitions or copying selected text to the clipboard only while learning mode is active, and
+- enables left-drag term selection in Pi's live TUI viewport for quick definitions or copying selected text to the clipboard only while learning mode is active, and
 - supports an explicit two-step edit-mode escape hatch.
+
+Note: left-drag definition popups work inside Pi's active TUI viewport. Native terminal scrollback is handled by the terminal emulator and does not deliver mouse events to Pi extensions; copy scrollback text and use `/define <text>` instead.
 
 See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for the original implementation checklist.

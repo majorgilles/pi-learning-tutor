@@ -42,7 +42,6 @@ interface LearningState {
 
 const STATE_ENTRY_TYPE = "learning-tutor-state";
 const CONTEXT_CUSTOM_TYPE = "learning-tutor-context";
-const SAFE_TOOLS = ["read", "bash", "grep", "find", "ls"];
 const LEARN_DONE = new Set(["done", "off", "stop", "exit", "end"]);
 const MOUSE_TRACKING_ON = "\x1b[?1002h\x1b[?1006h";
 const MOUSE_TRACKING_OFF = "\x1b[?1002l\x1b[?1006l";
@@ -321,6 +320,8 @@ function isProbablyReadOnlyBash(command: string): boolean {
           "df",
           "echo",
           "printf",
+          "curl",
+          "wget",
         ].includes(cmd)
       )
         continue;
@@ -344,7 +345,7 @@ function isProbablyReadOnlyBash(command: string): boolean {
         cmd === "node" ||
         cmd === "bun"
       )
-        return false;
+        continue;
       return false;
     }
   }
@@ -414,10 +415,11 @@ Default behavior:
 - Use bounded proactive inspection: obvious/referenced files, git status/diff, and narrow searches are OK; ask before broad repo scans.
 - When you inspect files/diffs, briefly say what you inspected.
 
-Tool restrictions:
-- You may use read-only inspection tools such as read, grep/find/ls, and safe bash commands like git status/git diff/tests.
-- You must not use edit/write.
-- Mutating bash commands are blocked.
+Tool access:
+- You have full access to external/research tools during learning mode (for example web_search, code_search, fetch_content, MCP tools, gh, curl, or small URL-fetch scripts) and you do not need to ask before using them when they help the learner.
+- You may also use bounded local inspection tools such as read, grep/find/ls, and safe bash commands like git status/git diff/tests.
+- You must not use edit/write unless edit-mode apply is explicitly approved.
+- Mutating bash commands are blocked in default learning mode.
 
 Edit mode status: ${editMode}
 ${editMode === "draft" ? "- The user requested edit mode. Draft a patch/proposal only. Do NOT apply it. Tell the user to run `/edit-mode apply` if they explicitly want it applied." : ""}
@@ -470,11 +472,6 @@ function updateStatus(ctx: ExtensionContext, state: LearningState): void {
       "AI file edits are blocked unless `/edit-mode apply` is approved.",
     ),
   ]);
-}
-
-function safeToolNames(pi: ExtensionAPI): string[] {
-  const available = new Set(pi.getAllTools().map((tool) => tool.name));
-  return SAFE_TOOLS.filter((tool) => available.has(tool));
 }
 
 function persist(pi: ExtensionAPI, state: LearningState): void {
@@ -1013,7 +1010,6 @@ class DefinitionOverlay {
 
 export default function learningTutorExtension(pi: ExtensionAPI): void {
   let state: LearningState = cloneState(DEFAULT_STATE);
-  let previousActiveTools: string[] | undefined;
   let selectionSupport: SelectionSupport | undefined;
 
   function enableSelectionSupport(ctx: ExtensionContext): void {
@@ -1030,14 +1026,12 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
   }
 
   function enableLearning(ctx: ExtensionContext, goal: string): void {
-    if (!state.active) previousActiveTools = pi.getActiveTools();
     state = {
       ...state,
       active: true,
       goal: goal || state.goal,
       editMode: { phase: "off" },
     };
-    pi.setActiveTools(safeToolNames(pi));
     enableSelectionSupport(ctx);
     updateStatus(ctx, state);
     persist(pi, state);
@@ -1045,8 +1039,6 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
 
   function disableLearning(ctx: ExtensionContext): void {
     state = { ...state, active: false, editMode: { phase: "off" } };
-    if (previousActiveTools?.length) pi.setActiveTools(previousActiveTools);
-    previousActiveTools = undefined;
     disableSelectionSupport(ctx);
     updateStatus(ctx, state);
     persist(pi, state);
@@ -1056,8 +1048,6 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
     disableSelectionSupport(ctx);
     state = restoreState(ctx);
     if (state.active) {
-      previousActiveTools = pi.getActiveTools();
-      pi.setActiveTools(safeToolNames(pi));
       enableSelectionSupport(ctx);
     }
     updateStatus(ctx, state);
@@ -1194,11 +1184,6 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
         };
         persist(pi, state);
         updateStatus(ctx, state);
-        pi.setActiveTools(
-          previousActiveTools?.length
-            ? previousActiveTools
-            : pi.getAllTools().map((tool) => tool.name),
-        );
         await sendAsUser(
           pi,
           ctx,
@@ -1265,7 +1250,7 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
       if (!isProbablyReadOnlyBash(command)) {
         return {
           block: true,
-          reason: `Learning tutor blocked a mutating or unsafe bash command. Default learning mode is read-only. Use /edit-mode for two-step patch approval.\nCommand: ${command}`,
+          reason: `Learning tutor blocked a mutating bash command. Default learning mode is read-only for local changes, but external/research tools are allowed. Use /edit-mode for two-step patch approval.\nCommand: ${command}`,
         };
       }
       return;
@@ -1277,13 +1262,6 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
         block: true,
         reason:
           "Learning tutor blocked AI file edits. The learner should type the code. Use /edit-mode for two-step patch approval.",
-      };
-    }
-
-    if (!applying && !SAFE_TOOLS.includes(event.toolName)) {
-      return {
-        block: true,
-        reason: `Learning tutor allows only bounded read-only tools in learning mode. Blocked tool: ${event.toolName}`,
       };
     }
   });
@@ -1304,7 +1282,6 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
 
     if (state.editMode.phase === "apply") {
       state.editMode = { phase: "off" };
-      pi.setActiveTools(safeToolNames(pi));
       persist(pi, state);
       updateStatus(ctx, state);
     }
