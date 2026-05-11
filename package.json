@@ -1,7 +1,6 @@
 {
   "name": "@majorgilles/pi-learning-tutor",
   "version": "0.1.0",
-  "private": true,
   "description": "Learning-mode tutoring, review loops, and definition overlays for pi.",
   "type": "module",
   "keywords": [
@@ -14,6 +13,13 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/majorgilles/pi-learning-tutor.git"
+  },
+  "homepage": "https://github.com/majorgilles/pi-learning-tutor#readme",
+  "bugs": {
+    "url": "https://github.com/majorgilles/pi-learning-tutor/issues"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "pi": {
     "extensions": [
