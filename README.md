@@ -31,13 +31,13 @@ While learning mode is active, the extension:
 - injects tutor-mode instructions into the agent context,
 - prefers one small learner-owned next step at a time,
 - keeps all external/research tools available (for example web/code search, fetch tools, MCP tools, `gh`, `curl`, or small URL-fetch scripts) without requiring extra permission,
-- blocks `edit`, `write`, and mutating bash commands by default,
+- blocks `edit`, `write`, and mutating bash commands by default, while allowing user-requested comment-only edits that add/refine explanations without changing executable code,
 - transforms readiness signals like `done`, `review`, or `I tried it` into review prompts,
 - asks the assistant to inspect relevant files/diffs before reviewing,
 - supports `/define` and `ctrl+shift+d` definition overlays,
-- opens a small “define/copy/cancel” popup when you drag-select terminal text in learning mode, and
-- supports an explicit two-step edit-mode escape hatch.
+- leaves native terminal mouse selection/scrollback behavior alone by default, and
+- supports an explicit two-step edit-mode escape hatch for broader code changes.
 
-Tip: while learning mode is active, drag-select text to open the popup. Use `/define` as a clipboard/manual fallback.
+Tip: select/copy terminal text normally, then run `/define` to define the clipboard contents. The old drag-to-define mouse capture is opt-in via `PI_LEARNING_TUTOR_MOUSE_CAPTURE=1` because it can break mouse-wheel scrollback.
 
 See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for the original implementation checklist.

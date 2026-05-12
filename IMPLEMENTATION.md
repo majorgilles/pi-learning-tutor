@@ -11,7 +11,7 @@
 
 2. **Hard learning gate**
    - Disable/avoid mutating tools while learning mode is active.
-   - Block `edit`/`write` tool calls.
+   - Block `edit`/`write` tool calls except user-requested comment-only explanatory edits that leave executable code unchanged.
    - Block mutating bash commands; allow bounded local inspection and full external/research tool access.
 
 3. **Learner-signal review loop**
@@ -29,7 +29,7 @@
    - Implement `/define <text>` using the active model directly from the extension.
    - Render the result in a Pi overlay, not as a normal chat message.
    - Add a keyboard shortcut fallback for quick definitions.
-   - Enable mouse drag selection in learning mode to show a define/copy/cancel popup.
+   - Preserve native terminal text selection/copy/scroll behavior; keep drag-to-define mouse capture opt-in only.
    - When `/define` is run without arguments, read clipboard text first and fall back to prompting.
    - Make definition overlays scrollable with ↑/↓, PgUp/PgDn, j/k, and Space.
 
@@ -40,7 +40,7 @@
 
 ## Follow-up investigations
 
-- Improve selection UX/visual highlighting and native-selection coexistence if Pi exposes a first-class terminal selection API later.
+- Investigate optional drag-to-define only if Pi exposes a first-class terminal selection API that does not hijack scrollback.
 - Improve bash read-only classification.
 - Add richer custom renderers for tutor steps/reviews.
 - Add optional glossary/profile later, behind explicit user opt-in.

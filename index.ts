@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, readdirSync, statSync } from "node:fs";
-import { extname, join } from "node:path";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { extname, join, resolve } from "node:path";
 import { complete, getModel } from "@earendil-works/pi-ai";
 import {
   getMarkdownTheme,
@@ -45,6 +45,9 @@ const CONTEXT_CUSTOM_TYPE = "learning-tutor-context";
 const LEARN_DONE = new Set(["done", "off", "stop", "exit", "end"]);
 const MOUSE_TRACKING_ON = "\x1b[?1002h\x1b[?1006h";
 const MOUSE_TRACKING_OFF = "\x1b[?1002l\x1b[?1006l";
+const ENABLE_MOUSE_SELECTION_CAPTURE = /^(1|true|yes|on)$/i.test(
+  process.env.PI_LEARNING_TUTOR_MOUSE_CAPTURE ?? "",
+);
 
 const DEFAULT_STATE: LearningState = {
   active: false,
@@ -61,11 +64,27 @@ const DEFAULT_STATE: LearningState = {
 
 const READINESS_RE =
   /^\s*(done|review|ready|i\s+tried\s+it|i\s+changed\s+it|take\s+a\s+look|please\s+review|here'?s\s+my\s+attempt)\b/i;
+const COMMENT_TARGET_RE =
+  /\b(comment(?:s|ary|ing)?|annotat(?:e|ed|ing|ion|ions)|doc(?:s|umentation|string)s?|javadocs?|jsdocs?|inline\s+notes?|explanatory\s+notes?)\b/i;
+const COMMENT_MUTATION_RE =
+  /\b(add|insert|include|write|put|place|update|modify|change|replace|improve|expand|make|clarify|annotate|document)\b/i;
+const COMMENT_EXPLAIN_IN_COMMENTS_RE =
+  /\b(explain|clarify)\b[\s\S]{0,80}\b(in|as|with)\s+(?:inline\s+)?comments?\b/i;
+const COMMENT_CODE_VERB_RE =
+  /\b(comment|annotate|document)\b[\s\S]{0,40}\b(code|file|function|class|method|module|implementation|logic|this)\b/i;
+const AFFIRMATIVE_RE =
+  /^\s*(yes|yep|yeah|sure|ok(?:ay)?|please|do it|go ahead|sounds good)\b/i;
 
 interface LanguageHint {
   name: string;
   fence: string;
   source: string;
+}
+
+interface CommentSyntax {
+  line: string[];
+  block: Array<{ start: string; end: string }>;
+  backtickStrings?: boolean;
 }
 
 const DEFAULT_LANGUAGE_HINT: LanguageHint = {
@@ -120,6 +139,66 @@ const EXTENSION_LANGUAGES: Record<string, { name: string; fence: string }> = {
   ".scala": { name: "Scala", fence: "scala" },
   ".wgsl": { name: "WGSL", fence: "wgsl" },
 };
+
+const C_LIKE_COMMENT_EXTENSIONS = new Set([
+  ".c",
+  ".cc",
+  ".cpp",
+  ".cxx",
+  ".h",
+  ".hh",
+  ".hpp",
+  ".java",
+  ".js",
+  ".jsx",
+  ".mjs",
+  ".cjs",
+  ".ts",
+  ".tsx",
+  ".kt",
+  ".kts",
+  ".cs",
+  ".go",
+  ".rs",
+  ".swift",
+  ".php",
+  ".dart",
+  ".scala",
+  ".sol",
+  ".wgsl",
+  ".jsonc",
+  ".json5",
+]);
+const HASH_COMMENT_EXTENSIONS = new Set([
+  ".py",
+  ".rb",
+  ".sh",
+  ".bash",
+  ".zsh",
+  ".fish",
+  ".ps1",
+  ".yaml",
+  ".yml",
+  ".toml",
+  ".ini",
+  ".cfg",
+  ".conf",
+  ".env",
+  ".dockerignore",
+  ".gitignore",
+]);
+const CSS_COMMENT_EXTENSIONS = new Set([".css", ".scss", ".sass", ".less"]);
+const HTML_COMMENT_EXTENSIONS = new Set([
+  ".html",
+  ".htm",
+  ".xml",
+  ".svg",
+  ".mdx",
+]);
+const TEMPLATE_COMMENT_EXTENSIONS = new Set([".vue", ".svelte", ".astro"]);
+const SQL_COMMENT_EXTENSIONS = new Set([".sql"]);
+const LUA_COMMENT_EXTENSIONS = new Set([".lua"]);
+const HASKELL_COMMENT_EXTENSIONS = new Set([".hs", ".lhs"]);
 
 const LANGUAGE_SCAN_IGNORES = new Set([
   ".git",
@@ -384,6 +463,309 @@ function recentConversationSnippet(
   return chunks.join("\n\n").slice(-maxChars);
 }
 
+function textRequestsCommentEdit(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+  return (
+    COMMENT_EXPLAIN_IN_COMMENTS_RE.test(trimmed) ||
+    COMMENT_CODE_VERB_RE.test(trimmed) ||
+    (COMMENT_TARGET_RE.test(trimmed) && COMMENT_MUTATION_RE.test(trimmed))
+  );
+}
+
+function latestUserMessage(
+  ctx: ExtensionContext,
+): { text: string; index: number } | undefined {
+  const branch = ctx.sessionManager.getBranch();
+  for (let i = branch.length - 1; i >= 0; i--) {
+    const entry: any = branch[i];
+    if (entry?.type !== "message" || entry.message?.role !== "user") continue;
+    const text = textFromMessage(entry.message).trim();
+    if (!text || text.includes("[LEARNING TUTOR MODE ACTIVE]")) continue;
+    return { text, index: i };
+  }
+  return undefined;
+}
+
+function previousAssistantText(
+  ctx: ExtensionContext,
+  beforeIndex: number,
+): string {
+  const branch = ctx.sessionManager.getBranch();
+  for (let i = beforeIndex - 1; i >= 0; i--) {
+    const entry: any = branch[i];
+    if (entry?.type !== "message" || entry.message?.role !== "assistant")
+      continue;
+    const text = textFromMessage(entry.message).trim();
+    if (text) return text;
+  }
+  return "";
+}
+
+function userRequestedCommentEdit(ctx: ExtensionContext): boolean {
+  const latest = latestUserMessage(ctx);
+  if (!latest) return false;
+  if (textRequestsCommentEdit(latest.text)) return true;
+
+  // Allow a concise "yes / go ahead" if the previous assistant turn explicitly
+  // offered to add explanatory comments. This keeps the exception user-driven.
+  if (!AFFIRMATIVE_RE.test(latest.text)) return false;
+  const previousAssistant = previousAssistantText(ctx, latest.index);
+  return textRequestsCommentEdit(previousAssistant);
+}
+
+function commentSyntaxForPath(filePath: string): CommentSyntax | undefined {
+  const extension = extname(filePath).toLowerCase();
+  const fileName = filePath.split(/[\\/]/).pop()?.toLowerCase() ?? "";
+
+  if (TEMPLATE_COMMENT_EXTENSIONS.has(extension)) {
+    return {
+      line: ["//"],
+      block: [
+        { start: "<!--", end: "-->" },
+        { start: "{/*", end: "*/}" },
+        { start: "/*", end: "*/" },
+      ],
+      backtickStrings: true,
+    };
+  }
+
+  if (C_LIKE_COMMENT_EXTENSIONS.has(extension)) {
+    return {
+      line: ["//"],
+      block: [
+        ...(extension === ".tsx" || extension === ".jsx"
+          ? [{ start: "{/*", end: "*/}" }]
+          : []),
+        { start: "/*", end: "*/" },
+      ],
+      backtickStrings: true,
+    };
+  }
+
+  if (CSS_COMMENT_EXTENSIONS.has(extension)) {
+    return { line: [], block: [{ start: "/*", end: "*/" }] };
+  }
+
+  if (HTML_COMMENT_EXTENSIONS.has(extension)) {
+    return { line: [], block: [{ start: "<!--", end: "-->" }] };
+  }
+
+  if (
+    HASH_COMMENT_EXTENSIONS.has(extension) ||
+    [
+      "dockerfile",
+      "makefile",
+      "rakefile",
+      "gemfile",
+      ".dockerignore",
+      ".env",
+      ".gitignore",
+    ].includes(fileName)
+  ) {
+    return {
+      line: ["#"],
+      block: extension === ".ps1" ? [{ start: "<#", end: "#>" }] : [],
+    };
+  }
+
+  if (SQL_COMMENT_EXTENSIONS.has(extension)) {
+    return {
+      line: ["--"],
+      block: [{ start: "/*", end: "*/" }],
+    };
+  }
+
+  if (LUA_COMMENT_EXTENSIONS.has(extension)) {
+    return {
+      line: ["--"],
+      block: [{ start: "--[[", end: "]]" }],
+    };
+  }
+
+  if (HASKELL_COMMENT_EXTENSIONS.has(extension)) {
+    return {
+      line: ["--"],
+      block: [{ start: "{-", end: "-}" }],
+    };
+  }
+
+  return undefined;
+}
+
+function matchingLineComment(
+  text: string,
+  index: number,
+  syntax: CommentSyntax,
+): string | undefined {
+  for (const marker of [...syntax.line].sort((a, b) => b.length - a.length)) {
+    if (!text.startsWith(marker, index)) continue;
+    if (marker === "#" && index === 0 && text[index + 1] === "!") continue;
+    return marker;
+  }
+  return undefined;
+}
+
+function matchingBlockComment(
+  text: string,
+  index: number,
+  syntax: CommentSyntax,
+): { start: string; end: string } | undefined {
+  return [...syntax.block]
+    .sort((a, b) => b.start.length - a.start.length)
+    .find((marker) => text.startsWith(marker.start, index));
+}
+
+function copyQuotedString(
+  text: string,
+  index: number,
+): { value: string; nextIndex: number } {
+  const quote = text[index];
+  if (
+    (quote === "'" || quote === '"') &&
+    text.startsWith(quote.repeat(3), index)
+  ) {
+    const end = text.indexOf(quote.repeat(3), index + 3);
+    const nextIndex = end === -1 ? text.length : end + 3;
+    return { value: text.slice(index, nextIndex), nextIndex };
+  }
+
+  let nextIndex = index + 1;
+  let value = quote;
+  while (nextIndex < text.length) {
+    const char = text[nextIndex];
+    value += char;
+    nextIndex++;
+
+    if (char === "\\" && nextIndex < text.length) {
+      value += text[nextIndex];
+      nextIndex++;
+      continue;
+    }
+
+    if (char === quote) break;
+    if (quote !== "`" && (char === "\n" || char === "\r")) break;
+  }
+  return { value, nextIndex };
+}
+
+function stripComments(text: string, syntax: CommentSyntax): string {
+  let result = "";
+  let index = 0;
+
+  while (index < text.length) {
+    const char = text[index];
+    if (
+      char === "'" ||
+      char === '"' ||
+      (char === "`" && syntax.backtickStrings !== false)
+    ) {
+      const quoted = copyQuotedString(text, index);
+      result += quoted.value;
+      index = quoted.nextIndex;
+      continue;
+    }
+
+    const block = matchingBlockComment(text, index, syntax);
+    if (block) {
+      result += " ";
+      index += block.start.length;
+      while (index < text.length && !text.startsWith(block.end, index)) {
+        const current = text[index];
+        if (current === "\r") {
+          result += "\r";
+          if (text[index + 1] === "\n") {
+            result += "\n";
+            index += 2;
+          } else {
+            index++;
+          }
+          continue;
+        }
+        if (current === "\n") result += "\n";
+        index++;
+      }
+      if (text.startsWith(block.end, index)) index += block.end.length;
+      result += " ";
+      continue;
+    }
+
+    const line = matchingLineComment(text, index, syntax);
+    if (line) {
+      result += " ";
+      index += line.length;
+      while (
+        index < text.length &&
+        text[index] !== "\n" &&
+        text[index] !== "\r"
+      ) {
+        index++;
+      }
+      continue;
+    }
+
+    result += char;
+    index++;
+  }
+
+  return result;
+}
+
+function normalizedExecutableText(
+  text: string,
+  syntax: CommentSyntax,
+): string {
+  return stripComments(text, syntax)
+    .split(/\r?\n/)
+    .map((line) => line.replace(/[ \t]+$/g, ""))
+    .filter((line) => line.trim().length > 0)
+    .map((line) => {
+      const indent = line.match(/^[ \t]*/)?.[0] ?? "";
+      const body = line.slice(indent.length).replace(/[ \t]+/g, " ");
+      return `${indent}${body}`;
+    })
+    .join("\n")
+    .trim();
+}
+
+function isCommentOnlyTextChange(
+  filePath: string,
+  oldText: string,
+  newText: string,
+): boolean {
+  if (oldText === newText) return true;
+  const syntax = commentSyntaxForPath(filePath);
+  if (!syntax) return false;
+  return (
+    normalizedExecutableText(oldText, syntax) ===
+    normalizedExecutableText(newText, syntax)
+  );
+}
+
+function isCommentOnlyEdit(input: {
+  path: string;
+  edits: Array<{ oldText: string; newText: string }>;
+}): boolean {
+  return (
+    input.edits.length > 0 &&
+    input.edits.every((edit) =>
+      isCommentOnlyTextChange(input.path, edit.oldText, edit.newText),
+    )
+  );
+}
+
+function isCommentOnlyWrite(
+  cwd: string,
+  input: { path: string; content: string },
+): boolean {
+  try {
+    const current = readFileSync(resolve(cwd, input.path), "utf8");
+    return isCommentOnlyTextChange(input.path, current, input.content);
+  } catch {
+    return false;
+  }
+}
+
 function learningInstructions(
   state: LearningState,
   language: LanguageHint,
@@ -413,6 +795,7 @@ Default behavior:
 - When a code example would help, show a small exact code sample, not vague pseudocode.
 - Put every code sample in a fenced Markdown code block with the correct language tag for syntax highlighting; default to \`\`\`${language.fence}\` for current-language code.
 - Keep code samples minimal and illustrative; do not write, edit, or generate complete task solutions for the learner in default learning mode.
+- Exception: if the learner explicitly asks you to add or refine explanatory comments/annotations, you may make comment-only edits that leave executable code unchanged. Keep the comments concise and educational.
 - When the learner signals readiness (done/review/I tried it/etc.), inspect relevant diffs/files first, then review before giving the next step.
 - Use bounded proactive inspection: obvious/referenced files, git status/diff, and narrow searches are OK; ask before broad repo scans.
 - When you inspect files/diffs, briefly say what you inspected.
@@ -420,7 +803,7 @@ Default behavior:
 Tool access:
 - You have full access to external/research tools during learning mode (for example web_search, code_search, fetch_content, MCP tools, gh, curl, or small URL-fetch scripts) and you do not need to ask before using them when they help the learner.
 - You may also use bounded local inspection tools such as read, grep/find/ls, and safe bash commands like git status/git diff/tests.
-- You must not use edit/write unless edit-mode apply is explicitly approved.
+- You must not use edit/write unless edit-mode apply is explicitly approved, except for user-requested comment-only explanatory edits that leave executable code unchanged. Prefer edit over write for that exception.
 - Mutating bash commands are blocked in default learning mode.
 
 Edit mode status: ${editMode}
@@ -457,7 +840,7 @@ function updateStatus(ctx: ExtensionContext, state: LearningState): void {
 
   const phase =
     state.editMode.phase === "off"
-      ? "no AI edits"
+      ? "code edits gated"
       : `edit: ${state.editMode.phase}`;
   ctx.ui.setStatus(
     "learning-tutor",
@@ -471,7 +854,7 @@ function updateStatus(ctx: ExtensionContext, state: LearningState): void {
     ),
     ctx.ui.theme.fg(
       "muted",
-      "AI file edits are blocked unless `/edit-mode apply` is approved.",
+      "AI code edits are blocked unless `/edit-mode apply` is approved; requested comment-only explanations are allowed.",
     ),
   ]);
 }
@@ -1056,6 +1439,13 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
   let selectionSupport: SelectionSupport | undefined;
 
   function enableSelectionSupport(ctx: ExtensionContext): void {
+    if (!ENABLE_MOUSE_SELECTION_CAPTURE) {
+      // Disabled by default: terminal mouse tracking hijacks mouse-wheel
+      // scrollback and native text selection in most terminals. Use `/define`
+      // after copying text, or the Ctrl+Shift+D/manual fallback, instead of
+      // capturing mouse drags inside the extension.
+      return;
+    }
     if (!ctx.hasUI || selectionSupport) return;
     selectionSupport = installSelectionDefineSupport(ctx, () => state);
   }
@@ -1298,7 +1688,7 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
     if (messages.length === event.messages.length) return;
     return { messages };
   });
-  pi.on("tool_call", async (event) => {
+  pi.on("tool_call", async (event, ctx) => {
     if (!state.active) return;
     const applying = state.editMode.phase === "apply";
 
@@ -1314,12 +1704,30 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
       return;
     }
 
-    if (event.toolName === "edit" || event.toolName === "write") {
+    if (isToolCallEventType("edit", event)) {
       if (applying) return;
+      if (userRequestedCommentEdit(ctx) && isCommentOnlyEdit(event.input)) {
+        return;
+      }
       return {
         block: true,
         reason:
-          "Learning tutor blocked AI file edits. The learner should type the code. Use /edit-mode for two-step patch approval.",
+          "Learning tutor blocked AI file edits. The learner should type code changes. User-requested comment-only explanatory edits are allowed; broader edits need /edit-mode apply.",
+      };
+    }
+
+    if (isToolCallEventType("write", event)) {
+      if (applying) return;
+      if (
+        userRequestedCommentEdit(ctx) &&
+        isCommentOnlyWrite(ctx.cwd, event.input)
+      ) {
+        return;
+      }
+      return {
+        block: true,
+        reason:
+          "Learning tutor blocked AI file writes. The learner should type code changes. User-requested comment-only explanatory edits to existing files are allowed; broader writes need /edit-mode apply.",
       };
     }
   });
