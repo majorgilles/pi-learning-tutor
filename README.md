@@ -18,7 +18,7 @@ pi -e npm:@majorgilles/pi-learning-tutor
 
 - `/learn <anything>` — start learning mode with arbitrary context.
 - `/learn done`, `/learn off`, `/learn stop` — leave learning mode.
-- `/exercise [topic]` — generate a small context-relevant practice exercise without the solution.
+- `/exercise [topic]` — generate a context-calibrated build challenge based on the current learning context, recent commits/diffs, or issue/resources; no solution up front.
 - `/review [scope]` — request a broader learning review.
 - `/define [text]` — show a definition in an overlay without adding it to main chat context. With no text, reads the clipboard first, then prompts if the clipboard is unavailable/empty.
 - `/edit-mode <request>` — ask the assistant to draft a patch without applying it.
@@ -31,6 +31,7 @@ While learning mode is active, the extension:
 - injects tutor-mode instructions into the agent context,
 - prefers one small learner-owned next step at a time,
 - adds lightweight 30–90 second quick checks after key concepts when useful, evaluates learner answers supportively, and skips checks when they would interrupt flow,
+- treats `/exercise` as a larger context-aware build challenge command: it should inspect bounded evidence such as recent commits/diffs or the issue at hand, then ask the learner to build a new scoped artifact rather than make one tiny edit,
 - keeps all external/research tools available (for example web/code search, fetch tools, MCP tools, `gh`, `curl`, or small URL-fetch scripts) without requiring extra permission,
 - blocks `edit`, `write`, and mutating bash commands by default, while allowing user-requested comment-only edits that add/refine explanations without changing executable code,
 - transforms readiness signals like `done`, `review`, or `I tried it` into review prompts,

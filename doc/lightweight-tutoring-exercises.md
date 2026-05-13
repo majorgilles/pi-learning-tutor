@@ -25,11 +25,13 @@ Add an exercise after:
 
 Do **not** add exercises after every sentence or minor instruction.
 
-## Default Exercise Size
+## Default Quick-Check Size
 
-A default exercise should take about **30–90 seconds**.
+A default in-flow quick check should take about **30–90 seconds**.
 
-Good exercise formats:
+This default applies to automatic checks during tutoring. The explicit `/exercise` command is different: it is a build-oriented understanding-check request. It should inspect bounded context such as recent commits/diffs, the issue or learning goal, linked resources, and recent conversation, then propose a substantial but scoped challenge where the learner builds something new: a small feature, component, command, test harness, integration slice, example app, or equivalent artifact. It should not be just a question, prediction, or one small edit. It should end with an open invitation to build and share whatever is useful for review, not a rigid fill-in template, "ready for review" script, or closed-answer checklist.
+
+Good in-flow quick-check formats:
 
 - One short question.
 - One prediction: “What do you think happens if…?”
@@ -37,7 +39,7 @@ Good exercise formats:
 - One explanation in the learner’s own words.
 - One comparison between two options.
 
-Avoid long homework-style tasks unless the user asks for deeper practice.
+For in-flow quick checks, avoid long homework-style tasks unless the user asks for deeper practice. For `/exercise`, prefer a larger build challenge when the recent work or issue context makes that useful, but keep it focused on assessing the relevant concept rather than becoming open-ended homework.
 
 ## When to Skip or Make Optional
 

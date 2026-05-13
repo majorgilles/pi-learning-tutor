@@ -41,23 +41,13 @@ export async function askModelForDefinition(
   }
 
   const language = detectCurrentLanguage(ctx.cwd);
-  const prompt = `You are helping a learner understand a term from a coding/technology tutoring session.
+  const prompt = `Define for a coding learner.
 
-Term or sentence to define:
-${text}
-Active learning goal:
-${state.goal || "(none)"}
+Term: ${text}
+Goal: ${state.goal || "(none)"}
+Context: ${recentConversationSnippet(ctx, 1200) || "(none)"}
 
-Recent conversation context:
-${recentConversationSnippet(ctx, 2400) || "(none)"}
-
-Return a compact Markdown explanation with:
-- Short meaning
-- Why it matters here
-- Tiny exact code example or analogy if useful; use fenced Markdown code blocks with language tag \`${language.fence}\` for ${language.name} code so it syntax-highlights
-- One follow-up question the learner might ask
-
-Do not solve the learner's coding task.`;
+Return compact Markdown: meaning, why it matters here, tiny example/analogy if useful (use \`${language.fence}\` fences for ${language.name}), and one possible follow-up. Do not solve the task.`;
   const response = await complete(
     currentModel,
     {

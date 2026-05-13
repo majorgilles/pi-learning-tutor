@@ -20,7 +20,7 @@
    - Guide the tutor to inspect `git status`, `git diff`, and relevant files before giving the next step.
 
 4. **Command surface**
-   - `/exercise [topic]` for context-relevant practice, including the concepts being practiced and why they matter.
+   - `/exercise [topic]` for a context-calibrated build challenge based on recent commits/diffs, the issue at hand, or an explicit topic, requiring the learner to build a new scoped artifact that demonstrates the concepts being assessed.
    - `/review [scope]` for broader/manual review such as commit history.
    - `/define <text>` for fallback definitions outside the main conversation.
    - `/edit-mode` for explicit two-step patch approval.

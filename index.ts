@@ -116,11 +116,11 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
   });
 
   pi.registerCommand("exercise", {
-    description: "Generate a context-relevant practice exercise",
+    description: "Generate a build-oriented understanding challenge",
     handler: async (args, ctx) => {
       if (!state.active) {
         ctx.ui.notify(
-          "Tip: start learning mode with /learn <anything> for context-aware exercises.",
+          "Tip: start learning mode with /learn <anything> for context-aware build challenges.",
           "info",
         );
       }
