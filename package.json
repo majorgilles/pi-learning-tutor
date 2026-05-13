@@ -33,6 +33,8 @@
   },
   "files": [
     "index.ts",
+    "src",
+    "doc",
     "README.md",
     "IMPLEMENTATION.md"
   ],
