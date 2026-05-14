@@ -43,3 +43,7 @@ While learning mode is active, the extension:
 Tip: select/copy terminal text normally, then run `/define` to define the clipboard contents. The old drag-to-define mouse capture is opt-in via `PI_LEARNING_TUTOR_MOUSE_CAPTURE=1` because it can break mouse-wheel scrollback.
 
 See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for the original implementation checklist.
+
+## License
+
+This source is available under the [PolyForm Noncommercial License 1.0.0](./LICENSE). You may download, copy, modify, and share it for noncommercial purposes. Commercial use is not permitted without separate written permission.

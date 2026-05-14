@@ -1,6 +1,6 @@
 {
   "name": "@majorgilles/pi-learning-tutor",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Learning-mode tutoring, review loops, and definition overlays for pi.",
   "type": "module",
   "keywords": [
@@ -38,5 +38,5 @@
     "README.md",
     "IMPLEMENTATION.md"
   ],
-  "license": "MIT"
+  "license": "PolyForm-Noncommercial-1.0.0"
 }
