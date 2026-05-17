@@ -1,6 +1,6 @@
 # Pi Learning Tutor
 
-A pi extension that turns a conversation into a learner-owned tutoring thread. It emphasizes concept-first explanations, blocks AI-authored edits by default, reviews learner attempts with bounded read-only inspection, and provides quick definition overlays.
+A pi extension that turns a conversation into a learner-owned tutoring thread. It emphasizes gradual concept scaffolding, blocks AI-authored edits by default, reviews learner attempts with bounded read-only inspection, and provides quick definition overlays.
 
 ## Install
 
@@ -30,6 +30,7 @@ While learning mode is active, the extension:
 
 - injects tutor-mode instructions into the agent context,
 - prefers one small learner-owned next step at a time,
+- introduces new terms through a short prerequisite ladder, defining mandatory concepts before relying on downstream jargon (for example, prediction/error before loss/gradient in basic ML),
 - adds lightweight 30–90 second quick checks after key concepts when useful, evaluates learner answers supportively, and skips checks when they would interrupt flow,
 - treats `/exercise` as a larger context-aware build challenge command: it should inspect bounded evidence such as recent commits/diffs or the issue at hand, then ask the learner to build a new scoped artifact rather than make one tiny edit,
 - keeps all external/research tools available (for example web/code search, fetch tools, MCP tools, `gh`, `curl`, or small URL-fetch scripts) without requiring extra permission,
@@ -41,6 +42,14 @@ While learning mode is active, the extension:
 - supports an explicit two-step edit-mode escape hatch for broader code changes.
 
 Tip: select/copy terminal text normally, then run `/define` to define the clipboard contents. The old drag-to-define mouse capture is opt-in via `PI_LEARNING_TUTOR_MOUSE_CAPTURE=1` because it can break mouse-wheel scrollback.
+
+## Development checks
+
+```bash
+npm install
+npm run typecheck
+npm pack --dry-run
+```
 
 See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for the original implementation checklist.
 
