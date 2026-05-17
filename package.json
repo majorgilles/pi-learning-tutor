@@ -1,6 +1,6 @@
 {
   "name": "@majorgilles/pi-learning-tutor",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Learning-mode tutoring, review loops, and definition overlays for pi.",
   "type": "module",
   "keywords": [
@@ -21,6 +21,9 @@
   "publishConfig": {
     "access": "public"
   },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
   "pi": {
     "extensions": [
       "./index.ts"
@@ -31,12 +34,20 @@
     "@earendil-works/pi-coding-agent": "*",
     "@earendil-works/pi-tui": "*"
   },
+  "devDependencies": {
+    "@earendil-works/pi-ai": "0.74.1",
+    "@earendil-works/pi-coding-agent": "0.74.1",
+    "@earendil-works/pi-tui": "0.74.1",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.0.0"
+  },
   "files": [
     "index.ts",
     "src",
     "doc",
     "README.md",
-    "IMPLEMENTATION.md"
+    "IMPLEMENTATION.md",
+    "tsconfig.json"
   ],
   "license": "PolyForm-Noncommercial-1.0.0"
 }
