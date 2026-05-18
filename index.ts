@@ -3,10 +3,16 @@ import {
   type ExtensionAPI,
   type ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
+import {
+  CODE_SAMPLES_CUSTOM_TYPE,
+  normalizeCodeSamplesInContent,
+  renderCodeSamplesMessage,
+} from "./src/code-samples.js";
 import { LEARN_DONE } from "./src/constants.js";
 import {
   ENABLE_MOUSE_SELECTION_CAPTURE,
   askModelForDefinition,
+  copyTextToClipboard,
   installSelectionDefineSupport,
   readTextFromClipboard,
   showDefinitionOverlay,
@@ -93,6 +99,11 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
   pi.on("session_shutdown", async () => {
     disableSelectionSupport();
   });
+
+  pi.registerMessageRenderer(
+    CODE_SAMPLES_CUSTOM_TYPE,
+    renderCodeSamplesMessage,
+  );
 
   pi.registerCommand("learn", {
     description:
@@ -181,6 +192,38 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
     },
   });
 
+  pi.registerCommand("copy-code", {
+    description: "Copy the latest tutor code sample: /copy-code [number]",
+    handler: async (args, ctx) => {
+      const samples = state.codeSamples;
+      if (samples.length === 0) {
+        ctx.ui.notify("No tutor code samples are available to copy yet.", "warning");
+        return;
+      }
+
+      const parsed = Number.parseInt(args.trim() || "1", 10);
+      const index = Number.isFinite(parsed) ? parsed : 1;
+      const sample = samples.find((item) => item.index === index);
+      if (!sample) {
+        ctx.ui.notify(
+          `No code sample ${index}. Available samples: ${samples
+            .map((item) => item.index)
+            .join(", ")}`,
+          "warning",
+        );
+        return;
+      }
+
+      const copied = copyTextToClipboard(sample.code);
+      ctx.ui.notify(
+        copied.ok === true
+          ? `Copied code sample ${index} to clipboard`
+          : `Copy failed: ${copied.error}`,
+        copied.ok === true ? "info" : "warning",
+      );
+    },
+  });
+
   pi.registerCommand("edit-mode", {
     description:
       "Two-step patch approval: /edit-mode <request>, then /edit-mode apply",
@@ -260,10 +303,39 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
   pi.on("context", async (event) => {
     const messages = event.messages.filter(
       (message: any) =>
-        !(message?.role === "custom" && message.customType === CONTEXT_CUSTOM_TYPE),
+        !(message?.role === "custom" &&
+          (message.customType === CONTEXT_CUSTOM_TYPE ||
+            message.customType === CODE_SAMPLES_CUSTOM_TYPE)),
     );
     if (messages.length === event.messages.length) return;
     return { messages };
+  });
+
+  pi.on("message_end", async (event) => {
+    if (!state.active || event.message.role !== "assistant") return;
+
+    const normalized = normalizeCodeSamplesInContent(event.message.content);
+    if (normalized.samples.length > 0) {
+      state = { ...state, codeSamples: normalized.samples };
+      persist(pi, state);
+      pi.sendMessage(
+        {
+          customType: CODE_SAMPLES_CUSTOM_TYPE,
+          content: `${normalized.samples.length} copyable code sample(s)`,
+          display: true,
+          details: { samples: normalized.samples },
+        },
+        { deliverAs: "followUp" },
+      );
+    }
+
+    if (!normalized.changed) return;
+    return {
+      message: {
+        ...event.message,
+        content: normalized.content,
+      },
+    };
   });
 
   pi.on("tool_call", async (event, ctx) => {

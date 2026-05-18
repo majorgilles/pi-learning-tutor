@@ -1,6 +1,6 @@
 {
   "name": "@majorgilles/pi-learning-tutor",
-  "version": "0.1.11",
+  "version": "0.2.0",
   "description": "Learning-mode tutoring, review loops, and definition overlays for pi.",
   "type": "module",
   "keywords": [

@@ -17,6 +17,7 @@ export const DEFAULT_STATE: LearningState = {
   lastLearnerSignal: undefined,
   exercisesGiven: [],
   progressNotes: [],
+  codeSamples: [],
   editMode: { phase: "off" },
   updatedAt: Date.now(),
 };
@@ -28,6 +29,7 @@ export function cloneState(state: LearningState): LearningState {
     reviewedDiffRefs: [...state.reviewedDiffRefs],
     exercisesGiven: [...state.exercisesGiven],
     progressNotes: [...state.progressNotes],
+    codeSamples: [...state.codeSamples],
     editMode: { ...state.editMode } as EditModeState,
   };
 }
@@ -57,6 +59,9 @@ export function restoreState(ctx: ExtensionContext): LearningState {
       : [],
     progressNotes: Array.isArray(latest.data.progressNotes)
       ? latest.data.progressNotes
+      : [],
+    codeSamples: Array.isArray(latest.data.codeSamples)
+      ? latest.data.codeSamples
       : [],
     editMode: latest.data.editMode ?? { phase: "off" },
     updatedAt: latest.data.updatedAt ?? Date.now(),

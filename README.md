@@ -21,6 +21,7 @@ pi -e npm:@majorgilles/pi-learning-tutor
 - `/exercise [topic]` — generate a context-calibrated build challenge based on the current learning context, recent commits/diffs, or issue/resources; no solution up front.
 - `/review [scope]` — request a broader learning review.
 - `/define [text]` — show a definition in an overlay without adding it to main chat context. With no text, reads the clipboard first, then prompts if the clipboard is unavailable/empty.
+- `/copy-code [number]` — copy a raw code sample from the latest tutor response to the clipboard. Defaults to sample `1`.
 - `/edit-mode <request>` — ask the assistant to draft a patch without applying it.
 - `/edit-mode apply` — explicitly approve applying the previously drafted patch.
 
@@ -32,7 +33,7 @@ While learning mode is active, the extension:
 - prefers one small learner-owned next step at a time,
 - introduces new terms through a short prerequisite ladder, defining mandatory concepts before relying on downstream jargon (for example, prediction/error before loss/gradient in basic ML),
 - adds lightweight 30–90 second quick checks after key concepts when useful, evaluates learner answers supportively, and skips checks when they would interrupt flow,
-- asks for top-level, unindented fenced code samples so examples are easier to copy and paste,
+- normalizes fenced code samples after tutor responses, shows them as terminal code cards, and supports `/copy-code` for copying raw code without UI indentation,
 - treats `/exercise` as a larger context-aware build challenge command: it should inspect bounded evidence such as recent commits/diffs or the issue at hand, then ask the learner to build a new scoped artifact rather than make one tiny edit,
 - keeps all external/research tools available (for example web/code search, fetch tools, MCP tools, `gh`, `curl`, or small URL-fetch scripts) without requiring extra permission,
 - blocks `edit`, `write`, and mutating bash commands by default, while allowing user-requested comment-only edits that add/refine explanations without changing executable code,

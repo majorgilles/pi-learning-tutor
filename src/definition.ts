@@ -285,7 +285,7 @@ function copyViaOsc52(text: string): ClipboardResult {
   return { ok: true };
 }
 
-function copyTextToClipboard(text: string): ClipboardResult {
+export function copyTextToClipboard(text: string): ClipboardResult {
   const attempts: Array<[string, string[]]> =
     process.platform === "win32"
       ? [

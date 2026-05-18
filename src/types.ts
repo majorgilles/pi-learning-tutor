@@ -9,6 +9,13 @@ export interface ExerciseRecord {
   createdAt: number;
 }
 
+export interface StoredCodeSample {
+  index: number;
+  language?: string;
+  code: string;
+  createdAt: number;
+}
+
 export interface LearningState {
   active: boolean;
   goal?: string;
@@ -18,6 +25,7 @@ export interface LearningState {
   lastLearnerSignal?: string;
   exercisesGiven: ExerciseRecord[];
   progressNotes: string[];
+  codeSamples: StoredCodeSample[];
   editMode: EditModeState;
   updatedAt: number;
 }
