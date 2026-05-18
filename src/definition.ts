@@ -13,6 +13,7 @@ import {
 } from "@earendil-works/pi-tui";
 import { recentConversationSnippet } from "./conversation.js";
 import { detectCurrentLanguage } from "./language.js";
+import { COPY_PASTE_CODE_RULES } from "./prompts.js";
 import type { LearningState } from "./types.js";
 
 const MOUSE_TRACKING_ON = "\x1b[?1002h\x1b[?1006h";
@@ -47,7 +48,9 @@ Term: ${text}
 Goal: ${state.goal || "(none)"}
 Context: ${recentConversationSnippet(ctx, 1200) || "(none)"}
 
-Return compact Markdown: prerequisite idea(s) if the term depends on them, meaning, why it matters here, tiny example/analogy if useful (use \`${language.fence}\` fences for ${language.name}), and one possible follow-up. Define required terms before relying on them; do not use unexplained jargon or solve the task.`;
+Return compact Markdown: prerequisite idea(s) if the term depends on them, meaning, why it matters here, tiny example/analogy if useful (use \`${language.fence}\` fences for ${language.name}), and one possible follow-up. Define required terms before relying on them; do not use unexplained jargon or solve the task.
+
+${COPY_PASTE_CODE_RULES}`;
   const response = await complete(
     currentModel,
     {

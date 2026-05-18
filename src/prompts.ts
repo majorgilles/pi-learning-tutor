@@ -14,6 +14,12 @@ const TUTOR_CHECK_RULES = `Tutor checks:
 - Evaluate supportively. Continue for gist/minor issues; for major misconceptions give one hint + retry, then briefly explain/ease the check.
 - /exercise is separate: make it a scoped build challenge from current evidence, ending with an open invitation, not a rigid answer template.`;
 
+export const COPY_PASTE_CODE_RULES = `Copy-pasteable code samples:
+- Put fenced code blocks at the top level; never nest them inside bullets, numbered lists, blockquotes, callouts, or indented sections.
+- Start opening and closing triple backticks at column 1 with no leading spaces.
+- Inside fenced code blocks, use only indentation required by the language; do not add sample-wide padding.
+- If a numbered response needs an example, end the list item first, then show the code fence as a separate block.`;
+
 export function learningInstructions(
   state: LearningState,
   language: LanguageHint,
@@ -37,6 +43,8 @@ ${CONCEPT_SCAFFOLDING_RULES}
 
 ${TUTOR_CHECK_RULES}
 
+${COPY_PASTE_CODE_RULES}
+
 Tools:
 - External/research tools and read-only local inspection are OK when useful.
 - Do not use edit/write or mutating bash unless /edit-mode apply is active, except explicit comment-only explanation edits.
@@ -48,7 +56,7 @@ ${editMode === "apply" ? "Apply only the previously approved scoped patch, then 
 Response:
 1. Brief orientation.
 2. **Concepts behind this step**: 1-3 bullets in prerequisite order, tied to the next code/command.
-3. Review or one next learner step, with syntax-highlighted samples when helpful.
+3. Review or one next learner step, with copy-pasteable, syntax-highlighted top-level code samples when helpful.
 4. Add/skip **Quick check** using the rules above.
 5. End with the learner's next action.`;
 }
@@ -58,7 +66,7 @@ export function reviewSignalPrompt(original: string): string {
 
 Signal: ${JSON.stringify(original)}
 
-Before the next step, inspect bounded read-only context (prefer git status/diff), read only relevant files, state what you inspected, then give concise review: good, improve, next learner-owned step. Include prerequisite concepts before any next typing step; define mandatory terms before relying on them. If this was a quick-check answer, evaluate it with the tutor-check rules.`;
+Before the next step, inspect bounded read-only context (prefer git status/diff), read only relevant files, state what you inspected, then give concise review: good, improve, next learner-owned step. Include prerequisite concepts before any next typing step; define mandatory terms before relying on them. If this was a quick-check answer, evaluate it with the tutor-check rules. Any code samples must be top-level fenced blocks with no leading spaces before the backticks.`;
 }
 
 export function startLearningThreadPrompt(context: string): string {
@@ -69,7 +77,7 @@ Context may be any format. Use linked docs/repos/tutorials/issues as a blueprint
 Context:
 ${context}
 
-Orient me, inspect bounded context/resources if useful, explain key concepts slowly in prerequisite order, and give one learner-owned next step. Define mandatory terms before using downstream terms. Add a quick check only if it helps.`;
+Orient me, inspect bounded context/resources if useful, explain key concepts slowly in prerequisite order, and give one learner-owned next step. Define mandatory terms before using downstream terms. Add a quick check only if it helps. Any code samples must be top-level fenced blocks with no leading spaces before the backticks.`;
 }
 
 export function exerciseRequestPrompt(topic: string): string {
@@ -84,7 +92,7 @@ Use bounded evidence (recent commits/diffs/status, issue/goal, resources, conver
 
 Not a tiny drill, short question, prediction, or one-line edit.
 
-Include: evidence used, concept ladder/prerequisites assessed, why they matter, goal, constraints, target outcome, milestones, success criteria, and hints. Do not assess downstream terms until the required earlier concepts are clear. If resources exist, adapt their relevant pattern to this project. End with an open invitation to build/share whatever is useful for review; no rigid template or closed fields like "Ready for review", "What I built", or "Files I changed". No solution unless I get stuck after a retry.`;
+Include: evidence used, concept ladder/prerequisites assessed, why they matter, goal, constraints, target outcome, milestones, success criteria, and hints. Do not assess downstream terms until the required earlier concepts are clear. If resources exist, adapt their relevant pattern to this project. If you include code, use top-level fenced blocks with no leading spaces before the backticks. End with an open invitation to build/share whatever is useful for review; no rigid template or closed fields like "Ready for review", "What I built", or "Files I changed". No solution unless I get stuck after a retry.`;
 }
 
 export function broadReviewPrompt(scope: string): string {
@@ -92,7 +100,7 @@ export function broadReviewPrompt(scope: string): string {
 
 Scope: ${scope || "current learning thread"}
 
-Use bounded inspection for this scope; if it mentions commits, inspect git log/diff/status. Summarize progress, recurring issues, key concepts, prerequisite gaps, and 2-3 next improvements.`;
+Use bounded inspection for this scope; if it mentions commits, inspect git log/diff/status. Summarize progress, recurring issues, key concepts, prerequisite gaps, and 2-3 next improvements. Any code samples must be top-level fenced blocks with no leading spaces before the backticks.`;
 }
 
 export function editModeApplyPrompt(request: string): string {
@@ -101,7 +109,7 @@ export function editModeApplyPrompt(request: string): string {
 Apply only the approved scoped patch:
 ${request}
 
-Then explain what changed, the prerequisite concepts behind it, and the next learner-owned step.`;
+Then explain what changed, the prerequisite concepts behind it, and the next learner-owned step. Any code samples must be top-level fenced blocks with no leading spaces before the backticks.`;
 }
 
 export function editModeDraftPrompt(request: string): string {
@@ -112,5 +120,5 @@ Draft a patch/proposal only; do not call edit/write.
 Request:
 ${request}
 
-Explain why each change is needed. End by saying /edit-mode apply can approve applying it.`;
+Explain why each change is needed. Any code samples must be top-level fenced blocks with no leading spaces before the backticks. End by saying /edit-mode apply can approve applying it.`;
 }
