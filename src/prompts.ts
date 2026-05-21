@@ -18,7 +18,8 @@ export function learningInstructions(
   state: LearningState,
   language: LanguageHint,
 ): string {
-  const editMode = state.editMode.phase;
+  const executeActive =
+    state.editMode.phase === "execute" || state.editMode.phase === "apply";
   return `[LEARNING TUTOR MODE ACTIVE]
 
 Goal/context: ${state.goal || "(not specified)"}
@@ -39,11 +40,10 @@ ${TUTOR_CHECK_RULES}
 
 Tools:
 - External/research tools and read-only local inspection are OK when useful.
-- Do not use edit/write or mutating bash unless /edit-mode apply is active, except explicit comment-only explanation edits.
+- Do not use edit/write or mutating bash unless /execute is active, except explicit comment-only explanation edits.
 
-Edit mode: ${editMode}
-${editMode === "draft" ? "Draft a patch/proposal only. Do not apply it; mention /edit-mode apply for approval." : ""}
-${editMode === "apply" ? "Apply only the previously approved scoped patch, then return to learning mode." : ""}
+Execute command: ${executeActive ? "active" : "off"}
+${executeActive ? "Apply only the scoped /execute request, then return to normal learning mode." : ""}
 
 Response:
 1. Brief orientation.
@@ -95,22 +95,11 @@ Scope: ${scope || "current learning thread"}
 Use bounded inspection for this scope; if it mentions commits, inspect git log/diff/status. Summarize progress, recurring issues, key concepts, prerequisite gaps, and 2-3 next improvements.`;
 }
 
-export function editModeApplyPrompt(request: string): string {
-  return `[EDIT MODE APPLY]
+export function executePrompt(request: string): string {
+  return `[EXECUTE REQUEST]
 
-Apply only the approved scoped patch:
+Apply this scoped code change request without a separate confirmation step:
 ${request}
 
 Then explain what changed, the prerequisite concepts behind it, and the next learner-owned step.`;
-}
-
-export function editModeDraftPrompt(request: string): string {
-  return `[EDIT MODE DRAFT]
-
-Draft a patch/proposal only; do not call edit/write.
-
-Request:
-${request}
-
-Explain why each change is needed. End by saying /edit-mode apply can approve applying it.`;
 }
