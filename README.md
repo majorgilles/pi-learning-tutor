@@ -21,7 +21,7 @@ pi -e npm:@majorgilles/pi-learning-tutor
 - `/exercise [topic]` — generate a context-calibrated build challenge based on the current learning context, recent commits/diffs, or issue/resources; no solution up front.
 - `/review [scope]` — request a broader learning review.
 - `/define [text]` — show a definition in an overlay without adding it to main chat context. With no text, reads the clipboard first, then prompts if the clipboard is unavailable/empty.
-- `/execute <request>` — immediately ask the assistant to make a scoped code change; no separate confirmation step.
+- `/execute <request>` — immediately ask the assistant to make a scoped code change.
 
 ## Behavior
 

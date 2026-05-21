@@ -43,7 +43,7 @@ Tools:
 - Do not use edit/write or mutating bash unless /execute is active, except explicit comment-only explanation edits.
 
 Execute command: ${executeActive ? "active" : "off"}
-${executeActive ? "Apply only the scoped /execute request, then return to normal learning mode." : ""}
+${executeActive ? "Apply only the scoped /execute request. After changing files, summarize what changed and the next learner-owned step." : ""}
 
 Response:
 1. Brief orientation.
@@ -93,13 +93,4 @@ export function broadReviewPrompt(scope: string): string {
 Scope: ${scope || "current learning thread"}
 
 Use bounded inspection for this scope; if it mentions commits, inspect git log/diff/status. Summarize progress, recurring issues, key concepts, prerequisite gaps, and 2-3 next improvements.`;
-}
-
-export function executePrompt(request: string): string {
-  return `[EXECUTE REQUEST]
-
-Apply this scoped code change request without a separate confirmation step:
-${request}
-
-Then explain what changed, the prerequisite concepts behind it, and the next learner-owned step.`;
 }

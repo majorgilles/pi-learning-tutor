@@ -16,7 +16,6 @@ import {
 import { detectCurrentLanguage } from "./src/language.js";
 import {
   broadReviewPrompt,
-  executePrompt,
   exerciseRequestPrompt,
   learningInstructions,
   reviewSignalPrompt,
@@ -188,8 +187,7 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
   });
 
   pi.registerCommand("execute", {
-    description:
-      "Run a scoped AI code change request immediately, without a separate confirmation step",
+    description: "Execute a scoped AI code change request immediately",
     handler: async (args, ctx) => {
       if (!state.active) {
         ctx.ui.notify(
@@ -216,7 +214,7 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
       state.editMode = { phase: "execute", request, startedAt: Date.now() };
       persist(pi, state);
       updateStatus(ctx, state);
-      pi.sendUserMessage(executePrompt(request));
+      pi.sendUserMessage(request);
     },
   });
 
