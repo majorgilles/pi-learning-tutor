@@ -76,7 +76,9 @@ export function updateStatus(
   const phase =
     state.editMode.phase === "off"
       ? "code edits gated"
-      : `edit: ${state.editMode.phase}`;
+      : state.editMode.phase === "execute" || state.editMode.phase === "apply"
+        ? "execute active"
+        : "legacy execute state";
   ctx.ui.setStatus(
     "learning-tutor",
     ctx.ui.theme.fg("warning", `🎓 learning (${phase})`),
@@ -89,7 +91,7 @@ export function updateStatus(
     ),
     ctx.ui.theme.fg(
       "muted",
-      "AI code edits are blocked unless `/edit-mode apply` is approved; requested comment-only explanations are allowed.",
+      "AI code edits are blocked unless `/execute <request>` is active; requested comment-only explanations are allowed.",
     ),
   ]);
 }
