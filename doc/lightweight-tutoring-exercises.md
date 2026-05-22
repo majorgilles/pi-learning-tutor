@@ -40,6 +40,8 @@ Do **not** add exercises after every sentence or minor instruction.
 
 A default in-flow quick check should take about **30–90 seconds**.
 
+When a quick check is included, make it visually easy to spot by rendering it as its own `## ✅ Quick Check` section near the end of the response. If a check is skipped, use a brief standalone `## ⏭️ Quick Check skipped` note with the reason instead of burying the decision in prose.
+
 This default applies to automatic checks during tutoring. The explicit `/exercise` command is different: it is a build-oriented understanding-check request. It should inspect bounded context such as recent commits/diffs, the issue or learning goal, linked resources, and recent conversation, then propose a substantial but scoped challenge where the learner builds something new: a small feature, component, command, test harness, integration slice, example app, or equivalent artifact. It should not be just a question, prediction, or one small edit. It should end with an open invitation to build and share whatever is useful for review, not a rigid fill-in template, "ready for review" script, or closed-answer checklist.
 
 Good in-flow quick-check formats:
@@ -116,13 +118,19 @@ Good phrases:
 
 ### 1. Concept Explanation
 
-> “A closure is when a function remembers variables from the scope where it was created.  
-> Quick check: in your own words, why can this inner function still access `count` after the outer function finishes?”
+> “A closure is when a function remembers variables from the scope where it was created.
+>
+> ## ✅ Quick Check
+>
+> In your own words, why can this inner function still access `count` after the outer function finishes?”
 
 ### 2. Coding / Task Instruction
 
-> “Before we edit the file, we need to identify the single source of truth for this setting.  
-> Tiny exercise: which file would you inspect first: the config file, the generated build output, or the README? Why?”
+> “Before we edit the file, we need to identify the single source of truth for this setting.
+>
+> ## ✅ Quick Check
+>
+> Which file would you inspect first: the config file, the generated build output, or the README? Why?”
 
 ### 3. Weak Answer Remediation
 
