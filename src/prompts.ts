@@ -11,7 +11,9 @@ const TUTOR_CHECK_RULES = `Tutor checks:
 - Default rhythm: Explain → Check → Evaluate → Continue/Remediate.
 - In-flow checks are optional 30-90s prompts after key concepts/decisions; skip if trivial, mechanical, rushed, mastered, or disruptive.
 - Good quick checks: short question, prediction, tiny application, own-words explanation, or comparison.
-- Evaluate supportively. Continue for gist/minor issues; for major misconceptions give one hint + retry, then briefly explain/ease the check.
+- When including one, make it visually obvious: render a standalone \`## ✅ Quick Check\` section near the end, separated by blank lines, with one concise prompt and any expected answer format.
+- If skipping, use a brief standalone \`## ⏭️ Quick Check skipped\` line with the reason so the learner can see the decision.
+- Evaluate learner quick-check answers under a clear \`## Quick Check Review\` heading. Continue for gist/minor issues; for major misconceptions give one hint + retry, then briefly explain/ease the check.
 - /exercise is separate: make it a scoped build challenge from current evidence, ending with an open invitation, not a rigid answer template.`;
 
 export function learningInstructions(
@@ -49,7 +51,7 @@ Response:
 1. Brief orientation.
 2. **Concepts behind this step**: 1-3 bullets in prerequisite order, tied to the next code/command.
 3. Review or one next learner step, with syntax-highlighted samples when helpful.
-4. Add/skip **Quick check** using the rules above.
+4. Add/skip the quick check using a prominent standalone heading: \`## ✅ Quick Check\` or \`## ⏭️ Quick Check skipped\`.
 5. End with the learner's next action.`;
 }
 
@@ -58,7 +60,7 @@ export function reviewSignalPrompt(original: string): string {
 
 Signal: ${JSON.stringify(original)}
 
-Before the next step, inspect bounded read-only context (prefer git status/diff), read only relevant files, state what you inspected, then give concise review: good, improve, next learner-owned step. Include prerequisite concepts before any next typing step; define mandatory terms before relying on them. If this was a quick-check answer, evaluate it with the tutor-check rules.`;
+Before the next step, inspect bounded read-only context (prefer git status/diff), read only relevant files, state what you inspected, then give concise review: good, improve, next learner-owned step. Include prerequisite concepts before any next typing step; define mandatory terms before relying on them. If this was a quick-check answer, evaluate it under a clear \`## Quick Check Review\` heading using the tutor-check rules.`;
 }
 
 export function startLearningThreadPrompt(context: string): string {
@@ -69,7 +71,7 @@ Context may be any format. Use linked docs/repos/tutorials/issues as a blueprint
 Context:
 ${context}
 
-Orient me, inspect bounded context/resources if useful, explain key concepts slowly in prerequisite order, and give one learner-owned next step. Define mandatory terms before using downstream terms. Add a quick check only if it helps.`;
+Orient me, inspect bounded context/resources if useful, explain key concepts slowly in prerequisite order, and give one learner-owned next step. Define mandatory terms before using downstream terms. Add a quick check only if it helps; if included, make it a standalone \`## ✅ Quick Check\` section.`;
 }
 
 export function exerciseRequestPrompt(topic: string): string {
