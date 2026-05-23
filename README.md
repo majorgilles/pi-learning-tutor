@@ -23,13 +23,17 @@ pi -e npm:@majorgilles/pi-learning-tutor
 - `/define [text]` — show a definition in an overlay without adding it to main chat context. With no text, reads the clipboard first, then prompts if the clipboard is unavailable/empty.
 - `/act <request>` — immediately ask the assistant to make a scoped code change.
 
+## Internal tool
+
+- `learning_goal` — lets the tutor update the visible working goal with the concise goal inferred from the current discussion.
+
 ## Behavior
 
 While learning mode is active, the extension:
 
 - injects tutor-mode instructions into the agent context,
 - treats `/learn` text as starting context rather than a fixed goal,
-- keeps the working learning goal and why the learner is studying the current topic explicit as the conversation evolves, connecting hard parts to what they unlock,
+- keeps the concise working learning goal visible as the conversation evolves, connecting hard parts to why they are worth studying,
 - prefers one small learner-owned next step at a time,
 - introduces new terms through a short prerequisite ladder, defining mandatory concepts before relying on downstream jargon (for example, prediction/error before loss/gradient in basic ML),
 - adds lightweight 30–90 second quick checks after key concepts when useful, renders them as prominent standalone `## ✅ Quick Check` sections, evaluates learner answers supportively, and uses a visible skip note when checks would interrupt flow,

@@ -12,6 +12,7 @@ export const DEFAULT_STATE: LearningState = {
   active: false,
   goal: undefined,
   currentStep: undefined,
+  workingGoal: undefined,
   relevantFiles: [],
   reviewedDiffRefs: [],
   lastLearnerSignal: undefined,
@@ -89,11 +90,7 @@ export function updateStatus(
     ctx.ui.theme.fg("accent", "🎓 Learning mode active"),
     ctx.ui.theme.fg(
       "muted",
-      `Starting context: ${state.goal ? state.goal.slice(0, 100) : "(unspecified)"}`,
-    ),
-    ctx.ui.theme.fg(
-      "muted",
-      "Working goal should be inferred from the discussion each turn, with a clear why-now.",
+      `Working goal: ${(state.workingGoal || state.goal || "(not set yet)").slice(0, 100)}`,
     ),
     ctx.ui.theme.fg(
       "muted",

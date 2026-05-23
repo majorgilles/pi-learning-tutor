@@ -2,7 +2,8 @@ import type { LanguageHint, LearningState } from "./types.js";
 
 const DYNAMIC_GOAL_RULES = `Dynamic learning goal and motivation:
 - Treat the /learn text as starting context, not a fixed goal to repeat. The working learning goal should be inferred and updated organically from the latest user message, the discussion so far, and any inspected evidence.
-- Every substantive response must make the working learning goal clear to the learner before teaching details. Do not mechanically restate the original /learn text unless it is still the best current goal.
+- Before a substantive tutoring/review response, call the learning_goal tool with the concise working goal if it changed or needs to be made visible in the UI.
+- Every substantive response must show the working learning goal before teaching details. Do not mechanically restate the original /learn text unless it is still the best current goal.
 - Always explain why the learner is studying the current concept or task now: connect it to the working goal, the capability it builds, and what it unlocks next.
 - If the conversation drifts or the learner's need changes, briefly name the updated working goal and continue. If the goal or reason is unclear, ask one short goal-check question instead of guessing.
 - Connect difficult or tedious parts to the goal: name what capability the struggle is building and what "good enough for now" looks like.
@@ -55,6 +56,7 @@ ${CONCEPT_SCAFFOLDING_RULES}
 ${TUTOR_CHECK_RULES}
 
 Tools:
+- Use learning_goal to keep only the concise current working goal visible in the learning widget; do not put meta-instructions there.
 - External/research tools and read-only local inspection are OK when useful.
 - Do not use edit/write or mutating bash unless /act is active, except explicit comment-only explanation edits.
 
@@ -62,7 +64,7 @@ Act command: ${actActive ? "active" : "off"}
 ${actActive ? "Apply only the scoped /act request. After changing files, summarize what changed and the next learner-owned step." : ""}
 
 Response:
-1. **Working learning goal now:** infer the living goal from the current discussion in one sentence.
+1. **Working goal:** state the inferred living goal from the current discussion in one sentence.
 2. **Why this matters now:** explain why this concept/task is worth studying for that goal and what it unlocks.
 3. **Concepts behind this step**: 1-3 bullets in prerequisite order, tied to the next code/command.
 4. Review or one next learner step, with syntax-highlighted samples when helpful.
