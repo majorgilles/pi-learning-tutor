@@ -3,6 +3,7 @@ import {
   type ExtensionAPI,
   type ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
+import { Type } from "typebox";
 import { LEARN_DONE } from "./src/constants.js";
 import {
   ENABLE_MOUSE_SELECTION_CAPTURE,
@@ -61,10 +62,12 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
   }
 
   function enableLearning(ctx: ExtensionContext, goal: string): void {
+    const startingContext = goal || state.goal;
     state = {
       ...state,
       active: true,
-      goal: goal || state.goal,
+      goal: startingContext,
+      workingGoal: startingContext,
       editMode: { phase: "off" },
     };
     enableSelectionSupport(ctx);
@@ -99,9 +102,48 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
     disableSelectionSupport();
   });
 
+  pi.registerTool({
+    name: "learning_goal",
+    label: "Learning Goal",
+    description:
+      "Update the visible working learning goal for the active learning-tutor thread.",
+    parameters: Type.Object({
+      goal: Type.String({
+        description:
+          "Concise learner-facing working goal inferred from the current discussion.",
+      }),
+    }),
+    async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
+      if (!state.active) {
+        return {
+          content: [{ type: "text", text: "Learning mode is not active." }],
+          details: { active: false },
+        };
+      }
+
+      const workingGoal = params.goal.trim().replace(/\s+/g, " ").slice(0, 200);
+      state = {
+        ...state,
+        workingGoal: workingGoal || state.workingGoal || state.goal,
+      };
+      persist(pi, state);
+      updateStatus(ctx, state);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Working learning goal: ${state.workingGoal || "(not set)"}`,
+          },
+        ],
+        details: { active: true, workingGoal: state.workingGoal },
+      };
+    },
+  });
+
   pi.registerCommand("learn", {
     description:
-      "Start/stop a persistent learning-tutor thread: /learn <anything>, /learn done, /learn off",
+      "Start/stop learning mode with initial context; working goals update through discussion",
     handler: async (args, ctx) => {
       const trimmed = args.trim();
       if (LEARN_DONE.has(trimmed.toLowerCase())) {

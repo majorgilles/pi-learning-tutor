@@ -1,6 +1,6 @@
 {
   "name": "@majorgilles/pi-learning-tutor",
-  "version": "0.3.0",
+  "version": "0.4.1",
   "description": "Learning-mode tutoring, review loops, and definition overlays for pi.",
   "type": "module",
   "keywords": [
@@ -32,13 +32,15 @@
   "peerDependencies": {
     "@earendil-works/pi-ai": "*",
     "@earendil-works/pi-coding-agent": "*",
-    "@earendil-works/pi-tui": "*"
+    "@earendil-works/pi-tui": "*",
+    "typebox": "*"
   },
   "devDependencies": {
     "@earendil-works/pi-ai": "0.74.1",
     "@earendil-works/pi-coding-agent": "0.74.1",
     "@earendil-works/pi-tui": "0.74.1",
     "@types/node": "^22.0.0",
+    "typebox": "^1.1.38",
     "typescript": "^5.0.0"
   },
   "files": [

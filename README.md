@@ -1,6 +1,6 @@
 # Pi Learning Tutor
 
-A pi extension that turns a conversation into a learner-owned tutoring thread. It emphasizes gradual concept scaffolding, blocks AI-authored edits by default, reviews learner attempts with bounded read-only inspection, and provides quick definition overlays.
+A pi extension that turns a conversation into a learner-owned tutoring thread. It keeps the learner's working goal and why-now visible as the discussion evolves, emphasizes gradual concept scaffolding, blocks AI-authored edits by default, reviews learner attempts with bounded read-only inspection, and provides quick definition overlays.
 
 ## Install
 
@@ -16,18 +16,24 @@ pi -e npm:@majorgilles/pi-learning-tutor
 
 ## Commands
 
-- `/learn <anything>` — start learning mode with arbitrary context.
+- `/learn <anything>` — start learning mode with arbitrary starting context; the working learning goal is inferred and updated through the discussion.
 - `/learn done`, `/learn off`, `/learn stop` — leave learning mode.
 - `/exercise [topic]` — generate a context-calibrated build challenge based on the current learning context, recent commits/diffs, or issue/resources; no solution up front.
 - `/review [scope]` — request a broader learning review.
 - `/define [text]` — show a definition in an overlay without adding it to main chat context. With no text, reads the clipboard first, then prompts if the clipboard is unavailable/empty.
 - `/act <request>` — immediately ask the assistant to make a scoped code change.
 
+## Internal tool
+
+- `learning_goal` — lets the tutor update the visible working goal with the concise goal inferred from the current discussion.
+
 ## Behavior
 
 While learning mode is active, the extension:
 
 - injects tutor-mode instructions into the agent context,
+- treats `/learn` text as starting context rather than a fixed goal,
+- keeps the concise working learning goal visible as the conversation evolves, connecting hard parts to why they are worth studying,
 - prefers one small learner-owned next step at a time,
 - introduces new terms through a short prerequisite ladder, defining mandatory concepts before relying on downstream jargon (for example, prediction/error before loss/gradient in basic ML),
 - adds lightweight 30–90 second quick checks after key concepts when useful, renders them as prominent standalone `## ✅ Quick Check` sections, evaluates learner answers supportively, and uses a visible skip note when checks would interrupt flow,

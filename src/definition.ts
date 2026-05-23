@@ -44,10 +44,10 @@ export async function askModelForDefinition(
   const prompt = `Define for a coding learner.
 
 Term: ${text}
-Goal: ${state.goal || "(none)"}
-Context: ${recentConversationSnippet(ctx, 1200) || "(none)"}
+Starting learning context (not necessarily the current goal): ${state.goal || "(none)"}
+Recent conversation: ${recentConversationSnippet(ctx, 1200) || "(none)"}
 
-Return compact Markdown: prerequisite idea(s) if the term depends on them, meaning, why it matters here, tiny example/analogy if useful (use \`${language.fence}\` fences for ${language.name}), and one possible follow-up. Define required terms before relying on them; do not use unexplained jargon or solve the task.`;
+Infer the current learning purpose from the recent conversation when possible. Return compact Markdown: prerequisite idea(s) if the term depends on them, meaning, why it matters for the current purpose, tiny example/analogy if useful (use \`${language.fence}\` fences for ${language.name}), and one possible follow-up. Define required terms before relying on them; do not use unexplained jargon or solve the task.`;
   const response = await complete(
     currentModel,
     {

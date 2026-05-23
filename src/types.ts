@@ -16,6 +16,7 @@ export interface LearningState {
   active: boolean;
   goal?: string;
   currentStep?: string;
+  workingGoal?: string;
   relevantFiles: string[];
   reviewedDiffRefs: string[];
   lastLearnerSignal?: string;
