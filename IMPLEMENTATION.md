@@ -23,7 +23,7 @@
    - `/exercise [topic]` for a context-calibrated build challenge based on recent commits/diffs, the issue at hand, or an explicit topic, requiring the learner to build a new scoped artifact that demonstrates the concepts being assessed.
    - `/review [scope]` for broader/manual review such as commit history.
    - `/define <text>` for fallback definitions outside the main conversation.
-   - `/execute <request>` for fire-and-forget scoped code changes.
+   - `/act <request>` for fire-and-forget scoped code changes.
 
 5. **Definition overlay**
    - Implement `/define <text>` using the active model directly from the extension.
@@ -33,8 +33,8 @@
    - When `/define` is run without arguments, read clipboard text first and fall back to prompting.
    - Make definition overlays scrollable with ↑/↓, PgUp/PgDn, j/k, and Space.
 
-6. **Execute escape hatch**
-   - `/execute <request>` immediately unlocks mutating tools for one scoped execution turn.
+6. **Act escape hatch**
+   - `/act <request>` immediately unlocks mutating tools for one scoped execution turn.
    - No draft/apply confirmation loop.
    - Automatically return to learning mode after the execution turn.
 

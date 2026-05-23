@@ -1,7 +1,8 @@
 export type EditModeState =
   | { phase: "off" }
-  | { phase: "execute"; request: string; startedAt: number }
+  | { phase: "act"; request: string; startedAt: number }
   // Legacy phases kept so restored sessions from older versions can be reset safely.
+  | { phase: "execute"; request: string; startedAt: number }
   | { phase: "draft"; request: string; startedAt: number }
   | { phase: "awaiting-approval"; request: string; startedAt: number }
   | { phase: "apply"; request: string; startedAt: number };

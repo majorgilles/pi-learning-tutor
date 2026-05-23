@@ -186,12 +186,12 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
     },
   });
 
-  pi.registerCommand("execute", {
-    description: "Execute a scoped AI code change request immediately",
+  pi.registerCommand("act", {
+    description: "Act on a scoped AI code change request immediately",
     handler: async (args, ctx) => {
       if (!state.active) {
         ctx.ui.notify(
-          "Execute is only available inside learning mode. Start with /learn <anything>.",
+          "Act is only available inside learning mode. Start with /learn <anything>.",
           "warning",
         );
         return;
@@ -199,19 +199,19 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
 
       const request = args.trim();
       if (!request) {
-        ctx.ui.notify("Usage: /execute <request>", "warning");
+        ctx.ui.notify("Usage: /act <request>", "warning");
         return;
       }
 
       if (!ctx.isIdle()) {
         ctx.ui.notify(
-          "Execute request will run after the current agent turn finishes.",
+          "Act request will run after the current agent turn finishes.",
           "info",
         );
         await ctx.waitForIdle();
       }
 
-      state.editMode = { phase: "execute", request, startedAt: Date.now() };
+      state.editMode = { phase: "act", request, startedAt: Date.now() };
       persist(pi, state);
       updateStatus(ctx, state);
       pi.sendUserMessage(request);
@@ -258,7 +258,9 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
   pi.on("tool_call", async (event, ctx) => {
     if (!state.active) return;
     const executing =
-      state.editMode.phase === "execute" || state.editMode.phase === "apply";
+      state.editMode.phase === "act" ||
+      state.editMode.phase === "execute" ||
+      state.editMode.phase === "apply";
 
     if (isToolCallEventType("bash", event)) {
       if (executing) return;
@@ -266,7 +268,7 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
       if (!isProbablyReadOnlyBash(command)) {
         return {
           block: true,
-          reason: `Learning tutor blocked a mutating bash command. Default learning mode is read-only for local changes, but external/research tools are allowed. Use /execute <request> to run a scoped code change.\nCommand: ${command}`,
+          reason: `Learning tutor blocked a mutating bash command. Default learning mode is read-only for local changes, but external/research tools are allowed. Use /act <request> to run a scoped code change.\nCommand: ${command}`,
         };
       }
       return;
@@ -280,7 +282,7 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
       return {
         block: true,
         reason:
-          "Learning tutor blocked AI file edits. The learner should type code changes. User-requested comment-only explanatory edits are allowed; broader edits need /execute <request>.",
+          "Learning tutor blocked AI file edits. The learner should type code changes. User-requested comment-only explanatory edits are allowed; broader edits need /act <request>.",
       };
     }
 
@@ -295,7 +297,7 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
       return {
         block: true,
         reason:
-          "Learning tutor blocked AI file writes. The learner should type code changes. User-requested comment-only explanatory edits to existing files are allowed; broader writes need /execute <request>.",
+          "Learning tutor blocked AI file writes. The learner should type code changes. User-requested comment-only explanatory edits to existing files are allowed; broader writes need /act <request>.",
       };
     }
   });
@@ -313,7 +315,11 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
       return;
     }
 
-    if (state.editMode.phase === "execute" || state.editMode.phase === "apply") {
+    if (
+      state.editMode.phase === "act" ||
+      state.editMode.phase === "execute" ||
+      state.editMode.phase === "apply"
+    ) {
       state.editMode = { phase: "off" };
       persist(pi, state);
       updateStatus(ctx, state);
