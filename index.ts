@@ -101,7 +101,7 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
 
   pi.registerCommand("learn", {
     description:
-      "Start/stop a persistent learning-tutor thread: /learn <anything>, /learn done, /learn off",
+      "Start/stop learning mode with initial context; working goals update through discussion",
     handler: async (args, ctx) => {
       const trimmed = args.trim();
       if (LEARN_DONE.has(trimmed.toLowerCase())) {

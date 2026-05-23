@@ -89,11 +89,11 @@ export function updateStatus(
     ctx.ui.theme.fg("accent", "🎓 Learning mode active"),
     ctx.ui.theme.fg(
       "muted",
-      `Current learning goal: ${state.goal ? state.goal.slice(0, 100) : "(unspecified)"}`,
+      `Starting context: ${state.goal ? state.goal.slice(0, 100) : "(unspecified)"}`,
     ),
     ctx.ui.theme.fg(
       "muted",
-      "Hard parts are expected; each step should say why it matters for the goal.",
+      "Working goal should be inferred from the discussion each turn, with a clear why-now.",
     ),
     ctx.ui.theme.fg(
       "muted",
