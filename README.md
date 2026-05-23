@@ -21,7 +21,7 @@ pi -e npm:@majorgilles/pi-learning-tutor
 - `/exercise [topic]` — generate a context-calibrated build challenge based on the current learning context, recent commits/diffs, or issue/resources; no solution up front.
 - `/review [scope]` — request a broader learning review.
 - `/define [text]` — show a definition in an overlay without adding it to main chat context. With no text, reads the clipboard first, then prompts if the clipboard is unavailable/empty.
-- `/execute <request>` — immediately ask the assistant to make a scoped code change.
+- `/act <request>` — immediately ask the assistant to make a scoped code change.
 
 ## Behavior
 
@@ -38,7 +38,7 @@ While learning mode is active, the extension:
 - asks the assistant to inspect relevant files/diffs before reviewing,
 - supports `/define` and `ctrl+shift+d` definition overlays,
 - leaves native terminal mouse selection/scrollback behavior alone by default, and
-- supports `/execute <request>` as a fire-and-forget escape hatch for broader scoped code changes.
+- supports `/act <request>` as a fire-and-forget escape hatch for broader scoped code changes.
 
 Tip: select/copy terminal text normally, then run `/define` to define the clipboard contents. The old drag-to-define mouse capture is opt-in via `PI_LEARNING_TUTOR_MOUSE_CAPTURE=1` because it can break mouse-wheel scrollback.
 

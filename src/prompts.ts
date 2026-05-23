@@ -20,8 +20,10 @@ export function learningInstructions(
   state: LearningState,
   language: LanguageHint,
 ): string {
-  const executeActive =
-    state.editMode.phase === "execute" || state.editMode.phase === "apply";
+  const actActive =
+    state.editMode.phase === "act" ||
+    state.editMode.phase === "execute" ||
+    state.editMode.phase === "apply";
   return `[LEARNING TUTOR MODE ACTIVE]
 
 Goal/context: ${state.goal || "(not specified)"}
@@ -42,10 +44,10 @@ ${TUTOR_CHECK_RULES}
 
 Tools:
 - External/research tools and read-only local inspection are OK when useful.
-- Do not use edit/write or mutating bash unless /execute is active, except explicit comment-only explanation edits.
+- Do not use edit/write or mutating bash unless /act is active, except explicit comment-only explanation edits.
 
-Execute command: ${executeActive ? "active" : "off"}
-${executeActive ? "Apply only the scoped /execute request. After changing files, summarize what changed and the next learner-owned step." : ""}
+Act command: ${actActive ? "active" : "off"}
+${actActive ? "Apply only the scoped /act request. After changing files, summarize what changed and the next learner-owned step." : ""}
 
 Response:
 1. Brief orientation.
