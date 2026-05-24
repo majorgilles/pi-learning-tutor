@@ -1,6 +1,6 @@
 # Pi Learning Tutor
 
-A pi extension that turns a conversation into a learner-owned tutoring thread. It keeps the learner's working goal and why-now visible as the discussion evolves, emphasizes gradual concept scaffolding, blocks AI-authored edits by default, reviews learner attempts with bounded read-only inspection, and provides quick definition overlays.
+A pi extension that turns a conversation into a learner-owned tutoring thread. It keeps the learner's why-level learning purpose, why-now, and future-self payoff visible as the discussion evolves, emphasizes gradual concept scaffolding, blocks AI-authored edits by default, reviews learner attempts with bounded read-only inspection, and provides quick definition overlays.
 
 ## Install
 
@@ -16,7 +16,7 @@ pi -e npm:@majorgilles/pi-learning-tutor
 
 ## Commands
 
-- `/learn <anything>` — start learning mode with arbitrary starting context; the working learning goal is inferred and updated through the discussion.
+- `/learn <anything>` — start learning mode with arbitrary starting context; the why-level learning purpose is inferred and updated through the discussion.
 - `/learn done`, `/learn off`, `/learn stop` — leave learning mode.
 - `/exercise [topic]` — generate a context-calibrated build challenge based on the current learning context, recent commits/diffs, or issue/resources; no solution up front.
 - `/review [scope]` — request a broader learning review.
@@ -25,7 +25,7 @@ pi -e npm:@majorgilles/pi-learning-tutor
 
 ## Internal tool
 
-- `learning_goal` — lets the tutor update the visible working goal with the concise goal inferred from the current discussion.
+- `learning_goal` — lets the tutor update the visible learning purpose with the concise why-level goal inferred from the current discussion.
 
 ## Behavior
 
@@ -33,7 +33,7 @@ While learning mode is active, the extension:
 
 - injects tutor-mode instructions into the agent context,
 - treats `/learn` text as starting context rather than a fixed goal,
-- keeps the concise working learning goal visible as the conversation evolves, connecting hard parts to why they are worth studying,
+- keeps the concise why-level learning purpose visible as the conversation evolves, abstracting one level above the immediate task (for example, loops → doing things repeatedly; one-hot vectors → machine-learnable representations) and connecting hard parts to why they are worth studying now and how they will help the learner's future self,
 - prefers one small learner-owned next step at a time,
 - introduces new terms through a short prerequisite ladder, defining mandatory concepts before relying on downstream jargon (for example, prediction/error before loss/gradient in basic ML),
 - adds lightweight 30–90 second quick checks after key concepts when useful, renders them as prominent standalone `## ✅ Quick Check` sections, evaluates learner answers supportively, and uses a visible skip note when checks would interrupt flow,
