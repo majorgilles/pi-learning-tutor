@@ -1,6 +1,6 @@
 # Pi Learning Tutor
 
-A pi extension that turns a conversation into a learner-owned tutoring thread. It keeps the learner's why-level learning purpose visible, explains the now/later payoff in a beginner-friendly paragraph, emphasizes gradual concept scaffolding, blocks AI-authored edits by default, reviews learner attempts with bounded read-only inspection, and provides quick definition overlays.
+A pi extension that turns a conversation into a learner-owned tutoring thread. It keeps the learner's why-level learning purpose visible, explains the now/later payoff in a beginner-friendly 3–4 line paragraph, emphasizes gradual concept scaffolding, blocks AI-authored edits by default, reviews learner attempts with bounded read-only inspection, and provides quick definition overlays.
 
 ## Install
 
@@ -33,7 +33,7 @@ While learning mode is active, the extension:
 
 - injects tutor-mode instructions into the agent context,
 - treats `/learn` text as starting context rather than a fixed goal,
-- keeps the concise why-level learning purpose visible as the conversation evolves, abstracting one level above the immediate task (for example, loops → doing things repeatedly; one-hot vectors → machine-learnable representations) and uses a short plain-language paragraph to explain why the current step helps now and where the learner will reuse it later,
+- keeps the concise why-level learning purpose visible as the conversation evolves, abstracting one level above the immediate task (for example, loops → doing things repeatedly; one-hot vectors → machine-learnable representations) and uses a 3–4 line plain-language paragraph to define important task words, explain why the current step helps now, and show where the learner will reuse it later,
 - prefers one small learner-owned next step at a time,
 - introduces new terms through a short prerequisite ladder, defining mandatory concepts before relying on downstream jargon (for example, prediction/error before loss/gradient in basic ML),
 - adds lightweight 30–90 second quick checks after key concepts when useful, renders them as prominent standalone `## ✅ Quick Check` sections, evaluates learner answers supportively, and uses a visible skip note when checks would interrupt flow,
