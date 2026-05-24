@@ -86,11 +86,16 @@ export function updateStatus(
     "learning-tutor",
     ctx.ui.theme.fg("warning", `🎓 learning (${phase})`),
   );
+  const learningPurpose = state.workingGoal?.trim();
   ctx.ui.setWidget("learning-tutor", [
     ctx.ui.theme.fg("accent", "🎓 Learning mode active"),
     ctx.ui.theme.fg(
       "muted",
-      `Working goal: ${(state.workingGoal || state.goal || "(not set yet)").slice(0, 100)}`,
+      `Learning purpose: ${
+        learningPurpose
+          ? learningPurpose.slice(0, 100)
+          : "inferring the why-level goal from the current context..."
+      }`,
     ),
     ctx.ui.theme.fg(
       "muted",

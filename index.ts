@@ -67,7 +67,8 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
       ...state,
       active: true,
       goal: startingContext,
-      workingGoal: startingContext,
+      // The model infers the durable why-level purpose from this context.
+      workingGoal: undefined,
       editMode: { phase: "off" },
     };
     enableSelectionSupport(ctx);
@@ -104,13 +105,13 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
 
   pi.registerTool({
     name: "learning_goal",
-    label: "Learning Goal",
+    label: "Learning Purpose",
     description:
-      "Update the visible working learning goal for the active learning-tutor thread.",
+      "Update the visible why-level learning purpose for the active learning-tutor thread.",
     parameters: Type.Object({
       goal: Type.String({
         description:
-          "Concise learner-facing working goal inferred from the current discussion.",
+          "Concise learner-facing why-level goal: the durable capability or concept being learned, not the immediate task.",
       }),
     }),
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
@@ -121,10 +122,13 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
         };
       }
 
-      const workingGoal = params.goal.trim().replace(/\s+/g, " ").slice(0, 200);
+      const learningPurpose = params.goal
+        .trim()
+        .replace(/\s+/g, " ")
+        .slice(0, 200);
       state = {
         ...state,
-        workingGoal: workingGoal || state.workingGoal || state.goal,
+        workingGoal: learningPurpose || state.workingGoal,
       };
       persist(pi, state);
       updateStatus(ctx, state);
@@ -133,7 +137,7 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
         content: [
           {
             type: "text",
-            text: `Working learning goal: ${state.workingGoal || "(not set)"}`,
+            text: `Learning purpose: ${state.workingGoal || "(inferring why-level goal)"}`,
           },
         ],
         details: { active: true, workingGoal: state.workingGoal },
@@ -143,7 +147,7 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
 
   pi.registerCommand("learn", {
     description:
-      "Start/stop learning mode with initial context; working goals update through discussion",
+      "Start/stop learning mode with initial context; why-level learning purpose updates through discussion",
     handler: async (args, ctx) => {
       const trimmed = args.trim();
       if (LEARN_DONE.has(trimmed.toLowerCase())) {
