@@ -1,20 +1,22 @@
 # Pi Learning Tutor
 
-A pi extension that turns a conversation into a learner-owned tutoring thread. It keeps the learner's why-level learning purpose visible, explains the now/later payoff in a beginner-friendly 3–4 line paragraph, emphasizes gradual concept scaffolding, blocks AI-authored edits by default, reviews learner attempts with bounded read-only inspection, and provides quick definition overlays.
+Turn any pi session into a live, learner-owned tutoring loop. Learning Tutor keeps the learner's why-level purpose visible, explains why the current step matters now and later, builds concepts gradually, blocks AI-authored edits by default, reviews learner attempts with bounded read-only inspection, and provides quick definition overlays.
 
 ## Why this is useful
 
-Learning Tutor turns the usual assistant back-and-forth into a contextual tutorial generated on the fly. The learner can ask "why?", challenge an example, request a smaller step, or ask to document an insight, and the tutor keeps adapting the explanation to the current repo, issue, notebook, or code diff.
+Most tutorials are static. Most assistant answers are one-off. Learning Tutor sits in the sweet spot between them: a contextual tutorial generated on the fly from the current repo, issue, notebook, code diff, error message, or question.
 
-The visible current learning goal is a key part of the loop. It keeps the durable purpose highlighted while the immediate task changes, so a learner can see how a small step like fixing a shape error, reading a softmax table, or creating a notebook cell fits into the larger concept they are building.
+The learner can ask "why?", challenge an example, request a smaller step, paste an error, or ask to document an insight. The tutor keeps adapting without taking ownership away from the learner.
 
-A typical learning loop looks like:
+The visible current learning goal is the anchor that makes the loop powerful. It keeps the durable purpose highlighted while the immediate task changes, so a small moment like fixing a shape error, reading a softmax table, or creating a notebook cell stays connected to the larger concept being learned.
 
-1. Start from context such as an issue, tutorial, file, or question.
-2. Infer and display the current why-level learning goal.
-3. Explain the next concept in prerequisite order.
-4. Let the learner try, ask follow-up questions, or push back.
-5. Review the attempt, adjust the goal if needed, and continue with a contextual next step.
+A typical learning loop feels like this:
+
+1. Start from real context: an issue, tutorial, file, error, or question.
+2. Keep the current why-level learning goal visible while the details evolve.
+3. Explain the next concept in prerequisite order, with the now/later payoff.
+4. Let the learner try, push back, ask "why?", or request a smaller step.
+5. Review the attempt, update the goal if needed, and continue the tutorial in context.
 
 ## Install
 
