@@ -2,6 +2,20 @@
 
 A pi extension that turns a conversation into a learner-owned tutoring thread. It keeps the learner's why-level learning purpose visible, explains the now/later payoff in a beginner-friendly 3–4 line paragraph, emphasizes gradual concept scaffolding, blocks AI-authored edits by default, reviews learner attempts with bounded read-only inspection, and provides quick definition overlays.
 
+## Why this is useful
+
+Learning Tutor turns the usual assistant back-and-forth into a contextual tutorial generated on the fly. The learner can ask "why?", challenge an example, request a smaller step, or ask to document an insight, and the tutor keeps adapting the explanation to the current repo, issue, notebook, or code diff.
+
+The visible current learning goal is a key part of the loop. It keeps the durable purpose highlighted while the immediate task changes, so a learner can see how a small step like fixing a shape error, reading a softmax table, or creating a notebook cell fits into the larger concept they are building.
+
+A typical learning loop looks like:
+
+1. Start from context such as an issue, tutorial, file, or question.
+2. Infer and display the current why-level learning goal.
+3. Explain the next concept in prerequisite order.
+4. Let the learner try, ask follow-up questions, or push back.
+5. Review the attempt, adjust the goal if needed, and continue with a contextual next step.
+
 ## Install
 
 ```bash
