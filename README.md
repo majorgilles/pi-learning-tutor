@@ -8,7 +8,11 @@ Most tutorials are static. Most assistant answers are one-off. Learning Tutor si
 
 The learner can ask "why?", challenge an example, request a smaller step, paste an error, or ask to document an insight. The tutor keeps adapting without taking ownership away from the learner.
 
+Progressive reviews are where the value compounds. Instead of one big pass/fail check, the tutor reviews each attempt in context, names what improved, spots the next gap, and adjusts the follow-up explanation, quick check, or build challenge to the learner's current needs.
+
 The visible current learning goal is the anchor that makes the loop powerful. It keeps the durable purpose highlighted while the immediate task changes, so a small moment like fixing a shape error, reading a softmax table, or creating a notebook cell stays connected to the larger concept being learned.
+
+Because the tutor reads the current conversation, files, diffs, and learner responses before guiding the next step, the experience becomes highly customized: pacing, examples, definitions, review depth, and next exercises can all adapt to what the learner is actually trying to understand.
 
 A typical learning loop feels like this:
 
@@ -16,7 +20,7 @@ A typical learning loop feels like this:
 2. Keep the current why-level learning goal visible while the details evolve.
 3. Explain the next concept in prerequisite order, with the now/later payoff.
 4. Let the learner try, push back, ask "why?", or request a smaller step.
-5. Review the attempt, update the goal if needed, and continue the tutorial in context.
+5. Review the attempt progressively, update the goal if needed, and continue with guidance tailored to the learner's needs.
 
 ## Install
 
@@ -57,7 +61,7 @@ While learning mode is active, the extension:
 - keeps all external/research tools available (for example web/code search, fetch tools, MCP tools, `gh`, `curl`, or small URL-fetch scripts) without requiring extra permission,
 - blocks `edit`, `write`, and mutating bash commands by default, while allowing user-requested comment-only edits that add/refine explanations without changing executable code,
 - transforms readiness signals like `done`, `review`, or `I tried it` into review prompts,
-- asks the assistant to inspect relevant files/diffs before reviewing,
+- asks the assistant to inspect relevant files/diffs before reviewing, so feedback stays grounded in the learner's actual attempt,
 - supports `/define` and `ctrl+shift+d` definition overlays,
 - leaves native terminal mouse selection/scrollback behavior alone by default, and
 - supports `/act <request>` as a fire-and-forget escape hatch for broader scoped code changes.
