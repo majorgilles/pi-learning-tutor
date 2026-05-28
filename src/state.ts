@@ -99,7 +99,7 @@ export function updateStatus(
     ),
     ctx.ui.theme.fg(
       "muted",
-      "AI code edits are blocked unless `/act <request>` is active; requested comment-only explanations are allowed.",
+      "Code/notebook context is reviewed automatically each turn; AI edits stay blocked unless `/act <request>` is active.",
     ),
   ]);
 }

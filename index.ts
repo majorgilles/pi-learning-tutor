@@ -32,6 +32,10 @@ import {
   updateStatus,
 } from "./src/state.js";
 import {
+  collectReviewContext,
+  collectReviewContextForTool,
+} from "./src/review-context.js";
+import {
   READINESS_RE,
   isCommentOnlyEdit,
   isCommentOnlyWrite,
@@ -141,6 +145,50 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
           },
         ],
         details: { active: true, workingGoal: state.workingGoal },
+      };
+    },
+  });
+
+  pi.registerTool({
+    name: "learning_review_context",
+    label: "Learning Review Context",
+    description:
+      "Gather bounded read-only code, git diff, and notebook evidence for an implicit learning review turn.",
+    promptSnippet:
+      "Gather current git status/diff and changed notebook/code snippets for learning review.",
+    promptGuidelines: [
+      "Use learning_review_context when learning mode is active and you need a fresh or focused code/notebook review context; every active learning turn already receives an automatic review snapshot.",
+      "Do not ask the learner to say 'read my code' or 'read my notebook' before reviewing visible changes; use learning_review_context or the injected automatic review context first.",
+    ],
+    parameters: Type.Object({
+      focus: Type.Optional(
+        Type.String({
+          description:
+            "Optional learner attempt, file, notebook, or concept to emphasize while gathering review context.",
+        }),
+      ),
+    }),
+    async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
+      if (!state.active) {
+        return {
+          content: [{ type: "text", text: "Learning mode is not active." }],
+          details: { active: false },
+        };
+      }
+
+      const reviewContext = await collectReviewContextForTool(
+        pi,
+        ctx,
+        state,
+        params.focus?.trim() || undefined,
+      );
+      return {
+        content: [{ type: "text", text: reviewContext.markdown }],
+        details: {
+          active: true,
+          truncated: reviewContext.truncated,
+          fullOutputPath: reviewContext.fullOutputPath,
+        },
       };
     },
   });
@@ -284,7 +332,25 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
 
   pi.on("before_agent_start", async (event, ctx) => {
     if (!state.active) return;
+
+    let automaticReviewContext: string;
+    try {
+      automaticReviewContext = (
+        await collectReviewContext(pi, ctx, state, { includeDiff: true })
+      ).markdown;
+    } catch (error) {
+      automaticReviewContext = `## Automatic learning review context\n\nAutomatic code/notebook review context failed to collect: ${
+        error instanceof Error ? error.message : String(error)
+      }. Continue with bounded read-only inspection before reviewing the learner's attempt.`;
+    }
+
     return {
+      message: {
+        customType: CONTEXT_CUSTOM_TYPE,
+        content: automaticReviewContext,
+        display: false,
+        details: { kind: "automatic-review-context" },
+      },
       systemPrompt: `${event.systemPrompt}\n\n${learningInstructions(
         state,
         detectCurrentLanguage(ctx.cwd),
@@ -293,9 +359,26 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
   });
 
   pi.on("context", async (event) => {
+    let latestContextIndex = -1;
+    if (state.active) {
+      for (let i = event.messages.length - 1; i >= 0; i--) {
+        const message: any = event.messages[i];
+        if (
+          message?.role === "custom" &&
+          message.customType === CONTEXT_CUSTOM_TYPE
+        ) {
+          latestContextIndex = i;
+          break;
+        }
+      }
+    }
     const messages = event.messages.filter(
-      (message: any) =>
-        !(message?.role === "custom" && message.customType === CONTEXT_CUSTOM_TYPE),
+      (message: any, index: number) =>
+        !(
+          message?.role === "custom" &&
+          message.customType === CONTEXT_CUSTOM_TYPE &&
+          index !== latestContextIndex
+        ),
     );
     if (messages.length === event.messages.length) return;
     return { messages };

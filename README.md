@@ -8,7 +8,7 @@ Great professors and tutorial creators do more than deliver information: they no
 
 The learner can ask "why?", challenge an example, request a smaller step, paste an error, or ask to document an insight. The tutor treats every question as useful signal and keeps adapting without taking ownership away from the learner.
 
-Progressive reviews are where the value compounds. Instead of one big pass/fail check, the tutor reviews each attempt in context, names what improved, spots the next gap, and adjusts the follow-up explanation, quick check, or build challenge to the learner's current needs.
+Progressive reviews are where the value compounds. Instead of waiting for the learner to say "read my notebook" or "read my code," the tutor treats every active learning turn as an implicit review iteration. It automatically gathers bounded git diff/status plus changed code or notebook snippets when available, reviews each attempt in context, names what improved, spots the next gap, and adjusts the follow-up explanation, quick check, or build challenge to the learner's current needs.
 
 The visible current learning goal is the anchor that makes the loop powerful. It keeps the durable purpose highlighted while the immediate task changes, so a small moment like fixing a shape error, reading a softmax table, or creating a notebook cell stays connected to the larger concept being learned.
 
@@ -43,15 +43,16 @@ pi -e npm:@majorgilles/pi-learning-tutor
 - `/define [text]` — show a definition in an overlay without adding it to main chat context. With no text, reads the clipboard first, then prompts if the clipboard is unavailable/empty.
 - `/act <request>` — immediately ask the assistant to make a scoped code change.
 
-## Internal tool
+## Internal tools
 
 - `learning_goal` — lets the tutor update the visible learning purpose with the concise why-level goal inferred from the current discussion.
+- `learning_review_context` — lets the tutor refresh bounded read-only review evidence (git status/diff plus changed code or notebook snippets) when the automatic per-turn snapshot needs more focus.
 
 ## Behavior
 
 While learning mode is active, the extension:
 
-- injects tutor-mode instructions into the agent context,
+- injects tutor-mode instructions and an automatic bounded code/notebook review snapshot into the agent context on every active learning turn,
 - treats `/learn` text as starting context rather than a fixed goal,
 - keeps the concise why-level learning purpose visible as the conversation evolves, abstracting one level above the immediate task (for example, loops → doing things repeatedly; one-hot vectors → machine-learnable representations) and uses a 3–4 line plain-language paragraph to define important task words, explain why the current step helps now, and show where the learner will reuse it later,
 - offers small learner-owned steps only when useful, without a forced `Next action:` footer,
@@ -61,7 +62,7 @@ While learning mode is active, the extension:
 - keeps all external/research tools available (for example web/code search, fetch tools, MCP tools, `gh`, `curl`, or small URL-fetch scripts) without requiring extra permission,
 - blocks `edit`, `write`, and mutating bash commands by default, while allowing user-requested comment-only edits that add/refine explanations without changing executable code,
 - transforms readiness signals like `done`, `review`, or `I tried it` into review prompts,
-- asks the assistant to inspect relevant files/diffs before reviewing, so feedback stays grounded in the learner's actual attempt,
+- treats every turn as an implicit review iteration: it automatically inspects bounded git status/diff plus changed code or notebook snippets when available, and asks the assistant to state what evidence it reviewed before giving feedback,
 - supports `/define` and `ctrl+shift+d` definition overlays,
 - leaves native terminal mouse selection/scrollback behavior alone by default, and
 - supports `/act <request>` as a fire-and-forget escape hatch for broader scoped code changes.

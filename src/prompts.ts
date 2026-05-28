@@ -32,6 +32,14 @@ const TUTOR_CHECK_RULES = `Tutor checks:
 - Evaluate learner quick-check answers under a clear \`## Quick Check Review\` heading. Continue for gist/minor issues; for major misconceptions give one hint + retry, then briefly explain/ease the check.
 - /exercise is separate: make it a scoped build challenge from current evidence, ending with an open invitation, not a rigid answer template.`;
 
+const IMPLICIT_REVIEW_RULES = `Implicit review loop:
+- Every learner turn is an iteration to review, not only turns containing words like "done" or "review".
+- The extension injects an Automatic learning review context section on every active learning turn with bounded git/code/notebook evidence when available.
+- Start from that injected evidence before teaching or hinting. If changed files, diffs, or notebook cells are present, review the learner's actual attempt first and state what you inspected.
+- Do not ask the learner to say "read my code" or "read my notebook". That review is implicit in learning mode.
+- If the automatic context is missing, stale, too broad, or points to a specific file/notebook that needs more detail, call learning_review_context or use read-only inspection tools before judging the attempt.
+- If no changes are visible, say so only when relevant, then continue from conversation context or ask for one specific missing artifact/path.`;
+
 export function learningInstructions(
   state: LearningState,
   language: LanguageHint,
@@ -52,8 +60,9 @@ Role:
 - When a concrete learner-owned step is useful, keep it inside the relevant section instead of adding a closing action footer. Before typing, name 1-3 concepts in prerequisite order and why they matter here.
 - Prefer concise Socratic hints, one diagnostic question max, and small exact examples. Do not solve whole tasks for the learner.
 - Comment-only explanatory edits are allowed only when explicitly requested; executable code stays unchanged.
-- On readiness signals, inspect bounded context/diffs first, say what you inspected, then review.
-- Bounded inspection: referenced files, git status/diff, narrow searches; ask before broad scans.
+- Every learner turn is an implicit review iteration; inspect the automatic review context first, then tutor.
+- On readiness signals, use the automatic context plus bounded follow-up reads/diffs if needed, say what you inspected, then review.
+- Bounded inspection: automatic review context, referenced files, git status/diff, narrow searches; ask before broad scans.
 
 ${DYNAMIC_GOAL_RULES}
 
@@ -61,8 +70,11 @@ ${CONCEPT_SCAFFOLDING_RULES}
 
 ${TUTOR_CHECK_RULES}
 
+${IMPLICIT_REVIEW_RULES}
+
 Tools:
 - Use learning_goal to keep only the concise why-level learning purpose visible in the learning widget; do not put immediate tasks, current steps, or meta-instructions there.
+- Use learning_review_context when you need to refresh or focus the automatic code/notebook review evidence during a turn.
 - External/research tools and read-only local inspection are OK when useful.
 - Do not use edit/write or mutating bash unless /act is active, except explicit comment-only explanation edits.
 
@@ -73,7 +85,7 @@ Response:
 1. **Learning purpose:** state the inferred why-level goal from the current discussion in one sentence.
 2. **Why this helps (now + later):** write one beginner-friendly paragraph of 3-4 short sentences/lines. Define any task-specific words you use, say what the learner is doing, why it helps with the current step, what the result means, and where they will reuse it later. Avoid compressed phrases like "turn X into Y" unless you explain X and Y immediately.
 3. **Concepts behind this step**: 1-3 bullets in prerequisite order, tied to the next code/command.
-4. Review, hint, or give a tiny learner-owned step only when it helps, with syntax-highlighted samples when useful.
+4. Review the learner's visible code/notebook/diff evidence first when present; then hint or give a tiny learner-owned step only when it helps, with syntax-highlighted samples when useful.
 5. When the material is hard, include specific encouragement that names the skill being built; avoid empty cheerleading.
 6. Add/skip the quick check using a prominent standalone heading: \`## ✅ Quick Check\` or \`## ⏭️ Quick Check skipped\`.
 7. Do not add a standalone \`Next action:\` line or similar forced action footer; close naturally after the review, hint, step, or quick check.`;
@@ -84,7 +96,7 @@ export function reviewSignalPrompt(original: string): string {
 
 Signal: ${JSON.stringify(original)}
 
-Before continuing, infer the current why-level learning purpose from the discussion rather than the original /learn text or immediate task, write one plain-language beginner-friendly paragraph of 3-4 short sentences/lines about why this review helps now and later, inspect bounded read-only context (prefer git status/diff), read only relevant files, state what you inspected, then give concise review: good, improve, and one useful follow-up only if needed. Include prerequisite concepts before any typing step; define mandatory terms before relying on them. If a hard part remains, explain what capability it is building, where it will pay off later, and what "good enough for now" means. Do not add a standalone \`Next action:\` line. If this was a quick-check answer, evaluate it under a clear \`## Quick Check Review\` heading using the tutor-check rules.`;
+Before continuing, infer the current why-level learning purpose from the discussion rather than the original /learn text or immediate task, write one plain-language beginner-friendly paragraph of 3-4 short sentences/lines about why this review helps now and later, use the automatically injected code/notebook review context first, refresh it with learning_review_context or bounded read-only tools only if needed, state what you inspected, then give concise review: good, improve, and one useful follow-up only if needed. Include prerequisite concepts before any typing step; define mandatory terms before relying on them. If a hard part remains, explain what capability it is building, where it will pay off later, and what "good enough for now" means. Do not add a standalone \`Next action:\` line. If this was a quick-check answer, evaluate it under a clear \`## Quick Check Review\` heading using the tutor-check rules.`;
 }
 
 export function startLearningThreadPrompt(context: string): string {
@@ -95,7 +107,7 @@ Context may be any format. Use linked docs/repos/tutorials/issues as a blueprint
 Context:
 ${context}
 
-Treat this context as a starting point, not a fixed goal. Infer an initial why-level learning purpose in learner-facing language: the durable capability or idea behind the immediate topic (for example, loops → doing things repeatedly; one-hot vectors → representing categories as learnable signals). Orient me, and expect that purpose to update as the discussion evolves. Inspect bounded context/resources if useful, explain key concepts slowly in prerequisite order, and give one learner-owned starting step only if it helps. Explain why this first step is worth studying as one beginner-friendly paragraph of 3-4 short sentences/lines: what I am doing, what the important words mean, why it helps now, and where future me will reuse it. Tie any hard part to what it unlocks, define mandatory terms before using downstream terms, and use specific encouragement rather than generic cheerleading. Add a quick check only if it helps; if included, make it a standalone \`## ✅ Quick Check\` section. Do not close with a standalone \`Next action:\` line.`;
+Treat this context as a starting point, not a fixed goal. Infer an initial why-level learning purpose in learner-facing language: the durable capability or idea behind the immediate topic (for example, loops → doing things repeatedly; one-hot vectors → representing categories as learnable signals). Orient me, and expect that purpose to update as the discussion evolves. Use the automatic review context as the first code/notebook review pass, inspect bounded context/resources if useful, explain key concepts slowly in prerequisite order, and give one learner-owned starting step only if it helps. Explain why this first step is worth studying as one beginner-friendly paragraph of 3-4 short sentences/lines: what I am doing, what the important words mean, why it helps now, and where future me will reuse it. Tie any hard part to what it unlocks, define mandatory terms before using downstream terms, and use specific encouragement rather than generic cheerleading. Add a quick check only if it helps; if included, make it a standalone \`## ✅ Quick Check\` section. Do not close with a standalone \`Next action:\` line.`;
 }
 
 export function exerciseRequestPrompt(topic: string): string {
@@ -106,7 +118,7 @@ export function exerciseRequestPrompt(topic: string): string {
 
 ${subject}
 
-Use bounded evidence (recent commits/diffs/status, issue/context, resources, conversation) to infer the current why-level learning purpose and choose the key concept(s) and their prerequisites. Then propose one substantial, scoped build challenge where I create a new artifact: feature, component, command, test harness, integration slice, example app, or similar.
+Use bounded evidence (automatic review context, recent commits/diffs/status, issue/context, resources, conversation) to infer the current why-level learning purpose and choose the key concept(s) and their prerequisites. Then propose one substantial, scoped build challenge where I create a new artifact: feature, component, command, test harness, integration slice, example app, or similar.
 
 Not a tiny drill, short question, prediction, or one-line edit.
 
@@ -118,5 +130,5 @@ export function broadReviewPrompt(scope: string): string {
 
 Scope: ${scope || "current learning thread"}
 
-Use bounded inspection for this scope; if it mentions commits, inspect git log/diff/status. Infer the current why-level learning purpose from the discussion, include one beginner-friendly paragraph of 3-4 short sentences/lines about why the reviewed material helps now and later, summarize progress toward it, recurring issues, key concepts, prerequisite gaps, hard parts worth pushing through, and 2-3 possible improvements. Do not add a standalone \`Next action:\` line.`;
+Use the automatic review context first, then bounded inspection for this scope; if it mentions commits, inspect git log/diff/status. Infer the current why-level learning purpose from the discussion, include one beginner-friendly paragraph of 3-4 short sentences/lines about why the reviewed material helps now and later, summarize progress toward it, recurring issues, key concepts, prerequisite gaps, hard parts worth pushing through, and 2-3 possible improvements. Do not add a standalone \`Next action:\` line.`;
 }
