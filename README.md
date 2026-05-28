@@ -43,9 +43,10 @@ pi -e npm:@majorgilles/pi-learning-tutor
 - `/define [text]` — show a definition in an overlay without adding it to main chat context. With no text, reads the clipboard first, then prompts if the clipboard is unavailable/empty.
 - `/act <request>` — immediately ask the assistant to make a scoped code change.
 
-## Internal tool
+## Internal tools
 
 - `learning_goal` — lets the tutor update the visible learning purpose with the concise why-level goal inferred from the current discussion.
+- `learning_review_context` — gathers a deterministic, bounded read-only review packet: git status, staged/unstaged diff stats, diffs, and changed text/notebook snippets.
 
 ## Behavior
 
@@ -61,7 +62,7 @@ While learning mode is active, the extension:
 - keeps all external/research tools available (for example web/code search, fetch tools, MCP tools, `gh`, `curl`, or small URL-fetch scripts) without requiring extra permission,
 - blocks `edit`, `write`, and mutating bash commands by default, while allowing user-requested comment-only edits that add/refine explanations without changing executable code,
 - transforms readiness signals like `done`, `review`, or `I tried it` into review prompts,
-- asks the assistant to inspect relevant files/diffs before reviewing, so feedback stays grounded in the learner's actual attempt,
+- makes step reviews more deterministic by asking the assistant to call `learning_review_context` first and follow the same evidence order every time: status → staged/unstaged stats → diffs → changed file/notebook snippets,
 - supports `/define` and `ctrl+shift+d` definition overlays,
 - leaves native terminal mouse selection/scrollback behavior alone by default, and
 - supports `/act <request>` as a fire-and-forget escape hatch for broader scoped code changes.

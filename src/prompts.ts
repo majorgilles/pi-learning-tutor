@@ -32,6 +32,13 @@ const TUTOR_CHECK_RULES = `Tutor checks:
 - Evaluate learner quick-check answers under a clear \`## Quick Check Review\` heading. Continue for gist/minor issues; for major misconceptions give one hint + retry, then briefly explain/ease the check.
 - /exercise is separate: make it a scoped build challenge from current evidence, ending with an open invitation, not a rigid answer template.`;
 
+const DETERMINISTIC_REVIEW_RULES = `Deterministic review loop:
+- On learner readiness signals, step attempts, and /review requests, call learning_review_context before writing review feedback. Pass the learner signal, requested scope, current file, notebook, or concept as focus when one is known.
+- Use the tool's evidence order first: git status → staged/unstaged stats → staged/unstaged diffs → changed/untracked file or notebook snippets.
+- Do not substitute an improvised git/read sequence for the first pass. Add at most one narrow follow-up read/search only when the review context makes the missing evidence specific, and say why it was needed.
+- If the tool finds no code or notebook changes, say that explicitly and review the learner's answer/conversation instead of pretending files changed.
+- Keep review output stable: Review evidence, What looks good, What to adjust, and One useful follow-up only if needed.`;
+
 export function learningInstructions(
   state: LearningState,
   language: LanguageHint,
@@ -52,7 +59,7 @@ Role:
 - When a concrete learner-owned step is useful, keep it inside the relevant section instead of adding a closing action footer. Before typing, name 1-3 concepts in prerequisite order and why they matter here.
 - Prefer concise Socratic hints, one diagnostic question max, and small exact examples. Do not solve whole tasks for the learner.
 - Comment-only explanatory edits are allowed only when explicitly requested; executable code stays unchanged.
-- On readiness signals, inspect bounded context/diffs first, say what you inspected, then review.
+- On readiness signals, use the deterministic review loop before reviewing.
 - Bounded inspection: referenced files, git status/diff, narrow searches; ask before broad scans.
 
 ${DYNAMIC_GOAL_RULES}
@@ -61,8 +68,11 @@ ${CONCEPT_SCAFFOLDING_RULES}
 
 ${TUTOR_CHECK_RULES}
 
+${DETERMINISTIC_REVIEW_RULES}
+
 Tools:
 - Use learning_goal to keep only the concise why-level learning purpose visible in the learning widget; do not put immediate tasks, current steps, or meta-instructions there.
+- Use learning_review_context as the first evidence-gathering step for readiness/review turns, then add only narrow follow-up inspection if needed.
 - External/research tools and read-only local inspection are OK when useful.
 - Do not use edit/write or mutating bash unless /act is active, except explicit comment-only explanation edits.
 
@@ -84,7 +94,7 @@ export function reviewSignalPrompt(original: string): string {
 
 Signal: ${JSON.stringify(original)}
 
-Before continuing, infer the current why-level learning purpose from the discussion rather than the original /learn text or immediate task, write one plain-language beginner-friendly paragraph of 3-4 short sentences/lines about why this review helps now and later, inspect bounded read-only context (prefer git status/diff), read only relevant files, state what you inspected, then give concise review: good, improve, and one useful follow-up only if needed. Include prerequisite concepts before any typing step; define mandatory terms before relying on them. If a hard part remains, explain what capability it is building, where it will pay off later, and what "good enough for now" means. Do not add a standalone \`Next action:\` line. If this was a quick-check answer, evaluate it under a clear \`## Quick Check Review\` heading using the tutor-check rules.`;
+Before continuing, infer the current why-level learning purpose from the discussion rather than the original /learn text or immediate task, then call learning_review_context with the learner signal or current step as focus. Use that deterministic evidence first: git status, staged/unstaged stats, diffs, and changed file/notebook snippets. If it is insufficient, do at most one narrow follow-up read/search and say why. Then write one plain-language beginner-friendly paragraph of 3-4 short sentences/lines about why this review helps now and later, and give concise feedback using stable sections: \`## Review evidence\`, \`## What looks good\`, \`## What to adjust\`, and \`## One useful follow-up\` only if needed. Include prerequisite concepts before any typing step; define mandatory terms before relying on them. If a hard part remains, explain what capability it is building, where it will pay off later, and what "good enough for now" means. Do not add a standalone \`Next action:\` line. If this was a quick-check answer, evaluate it under a clear \`## Quick Check Review\` heading using the tutor-check rules.`;
 }
 
 export function startLearningThreadPrompt(context: string): string {
@@ -118,5 +128,5 @@ export function broadReviewPrompt(scope: string): string {
 
 Scope: ${scope || "current learning thread"}
 
-Use bounded inspection for this scope; if it mentions commits, inspect git log/diff/status. Infer the current why-level learning purpose from the discussion, include one beginner-friendly paragraph of 3-4 short sentences/lines about why the reviewed material helps now and later, summarize progress toward it, recurring issues, key concepts, prerequisite gaps, hard parts worth pushing through, and 2-3 possible improvements. Do not add a standalone \`Next action:\` line.`;
+Call learning_review_context first with the scope as focus, then use its deterministic evidence order before any narrow follow-up inspection. If the scope mentions commits, inspect git log/diff/status after that as needed. Infer the current why-level learning purpose from the discussion, include one beginner-friendly paragraph of 3-4 short sentences/lines about why the reviewed material helps now and later, summarize progress toward it, recurring issues, key concepts, prerequisite gaps, hard parts worth pushing through, and 2-3 possible improvements. State the evidence used clearly and do not add a standalone \`Next action:\` line.`;
 }

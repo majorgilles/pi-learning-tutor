@@ -22,6 +22,7 @@ import {
   reviewSignalPrompt,
   startLearningThreadPrompt,
 } from "./src/prompts.js";
+import { registerLearningReviewContextTool } from "./src/review-context.js";
 import {
   CONTEXT_CUSTOM_TYPE,
   DEFAULT_STATE,
@@ -102,6 +103,8 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
   pi.on("session_shutdown", async () => {
     disableSelectionSupport();
   });
+
+  registerLearningReviewContextTool(pi, () => state);
 
   pi.registerTool({
     name: "learning_goal",
