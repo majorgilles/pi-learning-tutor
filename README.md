@@ -1,12 +1,12 @@
 # Pi Learning Tutor
 
-Turn any pi session into a live, learner-owned tutoring loop. Learning Tutor keeps the learner's why-level purpose visible, explains why the current step matters now and later, builds concepts gradually, blocks AI-authored edits by default, reviews learner attempts with bounded read-only inspection, and provides quick definition overlays.
+Turn any pi session into your always-on, AI-assisted teacher: part patient professor, part sharp tutorial creator, part code reviewer that never loses the thread. Learning Tutor keeps the learner's why-level purpose visible, explains why the current step matters now and later, builds concepts gradually, blocks AI-authored edits by default, reviews learner attempts with bounded read-only inspection, and adapts no matter how simple, messy, or advanced the question is.
 
 ## Why this is useful
 
-Most tutorials are static. Most assistant answers are one-off. Learning Tutor sits in the sweet spot between them: a contextual tutorial generated on the fly from the current repo, issue, notebook, code diff, error message, or question.
+Great professors and tutorial creators do more than deliver information: they notice confusion, choose the next explanation, create the right-sized exercise, and connect today's tiny question to the bigger idea. Learning Tutor automates those teaching moves inside pi, turning the current repo, issue, notebook, code diff, error message, or question into a contextual tutorial that keeps reshaping itself around the learner.
 
-The learner can ask "why?", challenge an example, request a smaller step, paste an error, or ask to document an insight. The tutor keeps adapting without taking ownership away from the learner.
+The learner can ask "why?", challenge an example, request a smaller step, paste an error, or ask to document an insight. The tutor treats every question as useful signal and keeps adapting without taking ownership away from the learner.
 
 Progressive reviews are where the value compounds. Instead of one big pass/fail check, the tutor reviews each attempt in context, names what improved, spots the next gap, and adjusts the follow-up explanation, quick check, or build challenge to the learner's current needs.
 
@@ -67,6 +67,12 @@ While learning mode is active, the extension:
 - supports `/act <request>` as a fire-and-forget escape hatch for broader scoped code changes.
 
 Tip: select/copy terminal text normally, then run `/define` to define the clipboard contents. The old drag-to-define mouse capture is opt-in via `PI_LEARNING_TUTOR_MOUSE_CAPTURE=1` because it can break mouse-wheel scrollback.
+
+## Notes for educators and creators
+
+Learning Tutor is meant to amplify the best parts of human teaching, not replace or diminish them. It brings professor-style diagnosis, tutorial-creator pacing, and supportive review into the exact moment a learner gets stuck, so published lessons, classroom material, and real project work can become interactive.
+
+The promise is simple: the learner gets an AI-assisted teacher that keeps adapting to them, whether they ask for a high-level map, a beginner-friendly definition, a tiny next step, or a serious review of their own attempt.
 
 ## Development checks
 
