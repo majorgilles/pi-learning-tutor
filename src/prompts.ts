@@ -1,5 +1,80 @@
 import type { LanguageHint, LearningState } from "./types.js";
 
+type ObviousLearningResource = {
+  resources: string[];
+  reason: string;
+};
+
+const RESOURCE_URL_RE = /\bhttps?:\/\/[^\s<>"'`\])]+/gi;
+const FILE_RESOURCE_RE =
+  /(?:^|[\s"'(])(@?[^\s"'()<>`]+?\.(?:pdf|epub|md|markdown|ipynb|html?|docx?|pptx?))(?:$|[\s"').,;!?])/gi;
+const RESOURCE_HINT_RE =
+  /\b(book|chapter|pdf|tutorial|lesson|course|workbook|notebook|guide|walkthrough|documentation|docs|article|paper|paperback|textbook)\b/i;
+const RESOURCE_URL_HINT_RE =
+  /(?:\/|%2f)(?:tutorial|learn|lesson|chapter|course|guide|docs?|book|article|paper)(?:[\/?#._-]|$)|\.(?:pdf|epub|docx?|pptx?)(?:[?#]|$)/i;
+
+function cleanResourceToken(token: string): string {
+  return token.trim().replace(/^@/, "").replace(/[\])}>,.;!?]+$/g, "");
+}
+
+function uniqueResources(resources: string[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const resource of resources) {
+    const cleaned = cleanResourceToken(resource);
+    if (!cleaned || seen.has(cleaned)) continue;
+    seen.add(cleaned);
+    result.push(cleaned);
+  }
+  return result;
+}
+
+function extractResourceCandidates(context: string): string[] {
+  const urls = Array.from(context.matchAll(RESOURCE_URL_RE), (match) => match[0]);
+  const files = Array.from(
+    context.matchAll(FILE_RESOURCE_RE),
+    (match) => match[1] ?? match[0],
+  );
+  return uniqueResources([...urls, ...files]);
+}
+
+function detectObviousLearningResource(
+  context: string,
+): ObviousLearningResource | undefined {
+  const resources = extractResourceCandidates(context);
+  if (resources.length === 0) return undefined;
+
+  const compact = context.trim();
+  const hasOnlyOneBareResource =
+    resources.length === 1 &&
+    (compact === resources[0] || compact === `@${resources[0]}`);
+  const hasExplicitResourceWords = RESOURCE_HINT_RE.test(context);
+  const hasResourceLikeUrlOrDocument = resources.some((resource) =>
+    RESOURCE_URL_HINT_RE.test(resource),
+  );
+
+  if (!hasOnlyOneBareResource && !hasExplicitResourceWords && !hasResourceLikeUrlOrDocument) {
+    return undefined;
+  }
+
+  const reason = hasOnlyOneBareResource
+    ? "bare resource/link"
+    : hasResourceLikeUrlOrDocument
+      ? "tutorial/document-like resource"
+      : "resource words in /learn context";
+  return { resources, reason };
+}
+
+function resourceFollowingMode(context: string | undefined): string {
+  const signal = context ? detectObviousLearningResource(context) : undefined;
+  if (!signal) return "";
+  const resourceList = signal.resources
+    .map((resource) => `  - ${resource}`)
+    .join("\n");
+
+  return `\n\n[RESOURCE-FOLLOWING MODE]\nThe /learn context appears to name a primary learning resource (${signal.reason}):\n${resourceList}\n\nFollow that resource faithfully as the main syllabus:\n- First use the appropriate available read/fetch/parse tool to inspect the resource itself. For URLs, fetch the exact link; for local PDFs or documents, parse the exact file; for local Markdown/text, read the exact file. If the resource is inaccessible, say what failed and ask for the content rather than inventing it.\n- Preserve the resource's order, terminology, examples, notation, and exercise sequence unless the learner asks to change paths. Do not replace it with a generic lesson or a different tutorial.\n- Teach in chunks that match the source structure. Summarize where we are in the resource, quote or paraphrase key definitions accurately, and make the learner's next step follow the resource's next natural move.\n- Supplemental explanations are allowed only to clarify the resource. Clearly label project-specific adaptations or extra context as adaptations, and avoid skipping ahead.\n- If the source gives exercises or checkpoints, prefer those before inventing new ones; adapt only the minimum needed for the learner's repo or environment.`;
+}
+
 const DYNAMIC_GOAL_RULES = `Why-level learning purpose and motivation:
 - Treat the /learn text, latest task, and inspected evidence as clues, not as the visible goal to repeat.
 - The visible learning goal should answer "why am I learning this?" by naming the durable capability, mental model, or representation the learner is building. It should usually be one level more abstract than the immediate syntax, command, file, or task.
@@ -52,11 +127,11 @@ export function learningInstructions(
   return `[LEARNING TUTOR MODE ACTIVE]
 
 Starting learning context (not a fixed goal): ${state.goal || "(not specified)"}
-Language: ${language.name} (${language.source}); use \`${language.fence}\` fences for code.
+Language: ${language.name} (${language.source}); use \`${language.fence}\` fences for code.${resourceFollowingMode(state.goal)}
 
 Role:
 - Tutor for durable learning, not task autopilot.
-- Context may be any format. If it cites docs/tutorials/repos/issues, inspect useful resources and map their pattern to this project.
+- Context may be any format. If it cites docs/tutorials/repos/issues, inspect useful resources and map their pattern to this project; when the context is an obvious primary resource, follow the resource faithfully rather than substituting a generic lesson.
 - Keep the learner's current why-level learning purpose visible, then explain the now/later payoff in beginner-friendly words.
 - Make the learner's next step impossible to miss. Near the end, include either an explicitly actionable \`## ✅ Quick Check\` or a standalone \`## ➡️ Next step\` section. Before typing, name 1-3 concepts in prerequisite order and why they matter here.
 - Prefer concise Socratic hints, one diagnostic question max, and small exact examples. Do not solve whole tasks for the learner.
@@ -101,7 +176,7 @@ Before continuing, infer the current why-level learning purpose from the discuss
 export function startLearningThreadPrompt(context: string): string {
   return `[START LEARNING THREAD]
 
-Context may be any format. Use linked docs/repos/tutorials/issues as a blueprint when useful; map their pattern to this project.
+Context may be any format. Use linked docs/repos/tutorials/issues as a blueprint when useful; when it is an obvious resource such as a book/chapter PDF or exact tutorial link, follow that resource faithfully as the primary lesson path.${resourceFollowingMode(context)}
 
 Context:
 ${context}
