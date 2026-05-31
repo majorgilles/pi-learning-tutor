@@ -37,7 +37,7 @@ pi -e npm:@majorgilles/pi-learning-tutor
 ## Commands
 
 - `/learn <anything>` — start learning mode with arbitrary starting context; the why-level learning purpose is inferred and updated through the discussion. If the context is an obvious primary resource such as a book/chapter PDF or exact tutorial link, the tutor reads that resource and follows it faithfully as the main lesson path.
-- `/learn done`, `/learn off`, `/learn stop` — leave learning mode.
+- `/learn off` — leave learning mode. This is the only stop command; plain `done`, `review`, or `I tried it` remain review signals while learning mode is active.
 - `/exercise [topic]` — generate a context-calibrated build challenge based on the current learning context, recent commits/diffs, or issue/resources; no solution up front.
 - `/review [scope]` — request a broader learning review.
 - `/define [text]` — show a definition in an overlay without adding it to main chat context. With no text, reads the clipboard first, then prompts if the clipboard is unavailable/empty.
