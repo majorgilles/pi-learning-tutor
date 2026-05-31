@@ -4,7 +4,7 @@ import {
   type ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
-import { LEARN_DONE } from "./src/constants.js";
+import { LEARN_OFF_COMMAND } from "./src/constants.js";
 import {
   ENABLE_MOUSE_SELECTION_CAPTURE,
   askModelForDefinition,
@@ -147,17 +147,17 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
 
   pi.registerCommand("learn", {
     description:
-      "Start/stop learning mode with initial context; why-level learning purpose updates through discussion",
+      "Start learning mode with initial context; turn it off with /learn off",
     handler: async (args, ctx) => {
       const trimmed = args.trim();
-      if (LEARN_DONE.has(trimmed.toLowerCase())) {
+      if (trimmed.toLowerCase() === LEARN_OFF_COMMAND) {
         disableLearning(ctx);
         ctx.ui.notify("Learning mode off", "info");
         return;
       }
 
       if (!trimmed) {
-        ctx.ui.notify("Usage: /learn <anything> or /learn done", "warning");
+        ctx.ui.notify("Usage: /learn <anything> or /learn off", "warning");
         return;
       }
 
