@@ -1,1 +1,1 @@
-export const LEARN_DONE = new Set(["done", "off", "stop", "exit", "end"]);
+export const LEARN_OFF_COMMAND = "off";

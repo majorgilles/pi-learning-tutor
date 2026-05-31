@@ -3,7 +3,7 @@
 ## MVP tickets
 
 1. **Learning mode shell**
-   - Add `/learn <anything>`, `/learn done`, `/learn off`.
+   - Add `/learn <anything>` and use `/learn off` as the only stop command.
    - Persist lightweight per-session state.
    - Show a learning-mode status indicator.
    - Inject tutor-mode system/context instructions while active.
