@@ -113,8 +113,7 @@ const CODE_EXAMPLE_QUALITY_RULES = `Code examples and implementation guidance:
 - Prefer modular examples for non-trivial code: separate input/output boundaries from core logic, use named helpers, keep functions focused, and show where code would live when file placement matters.
 - Use types where they are idiomatic and teach the shape of the data: explicit TypeScript interfaces/types, Rust/Go/Java/Kotlin/C# signatures, and Python type hints for public APIs or non-obvious structures. Do not add noisy annotations where the language or lesson would be clearer without them.
 - Include concise documentation when it teaches intent: docstrings for public helpers/classes, comments for surprising constraints, and no line-by-line narration of obvious syntax.
-- Show quality signals when useful: validation, edge-case handling, deterministic examples, small tests/assertions, accessibility/security/performance notes, or failure cases suited to the technology.
-- After a substantial example, add 2-4 brief \`Recommendations\` only when useful. Make them ecosystem-specific, for example what to test next, how to split files, which types/docs to add, or which trade-off to avoid.`;
+- Show quality signals when useful: validation, edge-case handling, deterministic examples, small tests/assertions, accessibility/security/performance notes, or failure cases suited to the technology.`;
 
 export function learningInstructions(
   state: LearningState,
@@ -160,7 +159,7 @@ Response:
 2. **Why this helps (now + later):** write one beginner-friendly paragraph of 3-4 short sentences/lines. Define any task-specific words you use, say what the learner is doing, why it helps with the current step, what the result means, and where they will reuse it later. Avoid compressed phrases like "turn X into Y" unless you explain X and Y immediately.
 3. **Concepts behind this step**: 1-3 bullets in prerequisite order, tied to the next code/command.
 4. Review, hint, or give a tiny learner-owned step only when it helps, with syntax-highlighted, ecosystem-idiomatic samples when useful.
-5. If you include a non-trivial code example, make it modular, typed/documented where idiomatic, and add a few concise recommendations only when they help the learner judge quality.
+5. If you include a non-trivial code example, make it modular and typed/documented where idiomatic.
 6. When the material is hard, include specific encouragement that names the skill being built; avoid empty cheerleading.
 7. Add/skip the quick check using a prominent standalone heading: \`## ✅ Quick Check\` or \`## ⏭️ Quick Check skipped\`.
 8. Do not add a standalone \`Next action:\` line or similar forced action footer; close naturally after the review, hint, step, or quick check.`;
