@@ -114,8 +114,7 @@ const CODE_EXAMPLE_QUALITY_RULES = `Code examples and implementation guidance:
 - Use types where they are idiomatic and teach the shape of the data: explicit TypeScript interfaces/types, Rust/Go/Java/Kotlin/C# signatures, and Python type hints for public APIs or non-obvious structures. Do not add noisy annotations where the language or lesson would be clearer without them.
 - Include concise documentation when it teaches intent: docstrings for public helpers/classes, comments for surprising constraints, and no line-by-line narration of obvious syntax.
 - Show quality signals when useful: validation, edge-case handling, deterministic examples, small tests/assertions, accessibility/security/performance notes, or failure cases suited to the technology.
-- After a substantial example, add 2-4 brief \`Recommendations\` only when useful. Make them ecosystem-specific, for example what to test next, how to split files, which types/docs to add, or which trade-off to avoid.
-- Avoid presenting toy snippets as production-ready. Name omissions honestly and explain which refinements are optional versus important for real use.`;
+- After a substantial example, add 2-4 brief \`Recommendations\` only when useful. Make them ecosystem-specific, for example what to test next, how to split files, which types/docs to add, or which trade-off to avoid.`;
 
 export function learningInstructions(
   state: LearningState,
