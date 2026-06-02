@@ -108,7 +108,7 @@ const TUTOR_CHECK_RULES = `Tutor checks:
 - /exercise is separate: make it a scoped build challenge from current evidence, ending with an open invitation, not a rigid answer template.`;
 
 const CODE_EXAMPLE_QUALITY_RULES = `Code examples and implementation guidance:
-- Give code examples only when they clarify the lesson, review, or exercise. Keep the smallest useful example first, then mention optional hardening only if it helps.
+- Provide code examples as a normal teaching tool to make ideas concrete. Start with the smallest useful example, then layer in optional hardening or production refinements when they help the learner.
 - Match the ecosystem and the current repo: package manager, module style, naming, lint/format conventions, framework idioms, error-handling style, and test patterns.
 - Prefer modular examples for non-trivial code: separate input/output boundaries from core logic, use named helpers, keep functions focused, and show where code would live when file placement matters.
 - Use types where they are idiomatic and teach the shape of the data: explicit TypeScript interfaces/types, Rust/Go/Java/Kotlin/C# signatures, and Python type hints for public APIs or non-obvious structures. Do not add noisy annotations where the language or lesson would be clearer without them.
