@@ -756,24 +756,56 @@ function renderMath(raw: string): string {
   return rendered || raw;
 }
 
+function markdownCodeSpan(text: string): string {
+  const longestBacktickRun = Math.max(
+    0,
+    ...Array.from(text.matchAll(/`+/g), (match) => match[0].length),
+  );
+  const fence = "`".repeat(longestBacktickRun + 1);
+  const padding = text.startsWith("`") || text.endsWith("`") ? " " : "";
+  return `${fence}${padding}${text}${padding}${fence}`;
+}
+
+function mathPill(rendered: string): string {
+  return markdownCodeSpan(`⟪ ${rendered} ⟫`);
+}
+
+function renderInlineMath(raw: string): string {
+  return mathPill(renderMath(raw));
+}
+
+function renderDisplayMath(raw: string): string {
+  const lines = renderMath(raw)
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (lines.length === 0) return "";
+
+  if (lines.length === 1) {
+    return `\n> **Formula** ${mathPill(lines[0])}\n`;
+  }
+
+  return `\n> **Formula**\n${lines.map((line) => `> ${mathPill(line)}`).join("\n")}\n`;
+}
+
 function convertDelimitedMath(markdown: string): string {
   let result = markdown.replace(/\$\$([\s\S]*?)\$\$/g, (match, body: string) =>
-    isLikelyMath(body, true) ? renderMath(body) : match,
+    isLikelyMath(body, true) ? renderDisplayMath(body) : match,
   );
 
   result = result.replace(/\\\[([\s\S]*?)\\\]/g, (match, body: string) =>
-    isLikelyMath(body, true) ? renderMath(body) : match,
+    isLikelyMath(body, true) ? renderDisplayMath(body) : match,
   );
 
   result = result.replace(/\\\(([^]*?)\\\)/g, (match, body: string) =>
-    isLikelyMath(body, false) ? renderMath(body) : match,
+    isLikelyMath(body, false) ? renderInlineMath(body) : match,
   );
 
   result = result.replace(
     /(^|[^\\$])\$(?!\$)([^$\n]{1,500})(?<!\\)\$/g,
     (match, prefix: string, body: string) => {
       if (!isLikelyMath(body, false)) return match;
-      return `${prefix}${renderMath(body)}`;
+      return `${prefix}${renderInlineMath(body)}`;
     },
   );
 
