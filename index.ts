@@ -15,6 +15,7 @@ import {
   uninstallSelectionDefineSupport,
 } from "./src/definition.js";
 import { detectCurrentLanguage } from "./src/language.js";
+import { renderTerminalLatex } from "./src/latex.js";
 import {
   broadReviewPrompt,
   exerciseRequestPrompt,
@@ -290,6 +291,28 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
         detectCurrentLanguage(ctx.cwd),
       )}`,
     };
+  });
+
+  pi.on("message_end", async (event) => {
+    if (!state.active || event.message.role !== "assistant") return;
+
+    let changed = false;
+    const content = event.message.content.map((part: any) => {
+      if (part?.type === "text" && typeof part.text === "string") {
+        const text = renderTerminalLatex(part.text);
+        if (text !== part.text) changed = true;
+        return text === part.text ? part : { ...part, text };
+      }
+      if (part?.type === "thinking" && typeof part.thinking === "string") {
+        const thinking = renderTerminalLatex(part.thinking);
+        if (thinking !== part.thinking) changed = true;
+        return thinking === part.thinking ? part : { ...part, thinking };
+      }
+      return part;
+    });
+
+    if (!changed) return;
+    return { message: { ...event.message, content } };
   });
 
   pi.on("context", async (event) => {
