@@ -12,7 +12,6 @@ import {
   visibleWidth,
 } from "@earendil-works/pi-tui";
 import { recentConversationSnippet } from "./conversation.js";
-import { renderTerminalLatex } from "./latex.js";
 import { detectCurrentLanguage } from "./language.js";
 import type { LearningState } from "./types.js";
 
@@ -79,14 +78,13 @@ export async function showDefinitionOverlay(
   title: string,
   markdown: string,
 ): Promise<void> {
-  const terminalMarkdown = renderTerminalLatex(markdown);
   if (!ctx.hasUI) {
-    ctx.ui.notify(terminalMarkdown, "info");
+    ctx.ui.notify(markdown, "info");
     return;
   }
   await ctx.ui.custom<void>(
     (_tui, theme, _keybindings, done) =>
-      new DefinitionOverlay(theme, title, terminalMarkdown, done),
+      new DefinitionOverlay(theme, title, markdown, done),
     {
       overlay: true,
       overlayOptions: {
@@ -600,9 +598,7 @@ class DefinitionOverlay {
     const row = (s = "") =>
       `${this.theme.fg("border", "│")}${pad(truncateToWidth(s, inner, "…"))}${this.theme.fg("border", "│")}`;
     lines.push(this.theme.fg("border", `╭${"─".repeat(inner)}╮`));
-    lines.push(
-      row(` ${this.theme.fg("accent", `Definition: ${renderTerminalLatex(this.title)}`)}`),
-    );
+    lines.push(row(` ${this.theme.fg("accent", `Definition: ${this.title}`)}`));
     lines.push(row(""));
     for (const line of visibleBody) lines.push(row(line));
     lines.push(row(""));
