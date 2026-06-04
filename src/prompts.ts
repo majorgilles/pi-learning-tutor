@@ -99,8 +99,8 @@ const CONCEPT_SCAFFOLDING_RULES = `Concept pacing:
 - Prefer one new core idea per response. If several are unavoidable, label them as a small ladder and stop before overloading the learner.`;
 
 const TERMINAL_MATH_RULES = `Terminal math rendering:
-- When teaching formulas, use standard LaTeX math delimiters (\`$...$\`, \`$$...$$\`, \`\\(...\\)\`, or \`\\[...\\]\`) for mathematical notation; the learning extension converts common LaTeX into highlighted \`⟪ ... ⟫\` terminal-friendly Unicode previews.
-- Prefer simple canonical LaTeX for terminal readability: fractions, sums, hats, superscripts/subscripts, Greek letters, and common operators render best. Display math becomes a Formula callout, so use display delimiters for important equations and inline delimiters for short symbols. Avoid complex align/matrix environments unless the learner needs them.
+- When teaching formulas, use standard LaTeX math delimiters (\`$...$\`, \`$$...$$\`, \`\\(...\\)\`, or \`\\[...\\]\`) for mathematical notation; the learning extension converts common LaTeX into highlighted terminal-friendly Unicode previews.
+- Prefer simple canonical LaTeX for terminal readability: fractions, sums, hats, superscripts/subscripts, Greek letters, and common operators render best. Display math becomes a quoted highlighted preview, so use display delimiters for important equations and inline delimiters for short symbols. Avoid complex align/matrix environments unless the learner needs them.
 - Always explain what the symbols mean in plain words near the formula; do not rely on notation alone.`;
 
 const TUTOR_CHECK_RULES = `Tutor checks:

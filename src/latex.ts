@@ -767,7 +767,7 @@ function markdownCodeSpan(text: string): string {
 }
 
 function mathPill(rendered: string): string {
-  return markdownCodeSpan(`⟪ ${rendered} ⟫`);
+  return markdownCodeSpan(rendered);
 }
 
 function renderInlineMath(raw: string): string {
@@ -782,10 +782,10 @@ function renderDisplayMath(raw: string): string {
   if (lines.length === 0) return "";
 
   if (lines.length === 1) {
-    return `\n> **Formula** ${mathPill(lines[0])}\n`;
+    return `\n> ${mathPill(lines[0])}\n`;
   }
 
-  return `\n> **Formula**\n${lines.map((line) => `> ${mathPill(line)}`).join("\n")}\n`;
+  return `\n${lines.map((line) => `> ${mathPill(line)}`).join("\n")}\n`;
 }
 
 function convertDelimitedMath(markdown: string): string {
