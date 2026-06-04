@@ -1,3 +1,5 @@
+import type { DefaultTextStyle, Markdown } from "@earendil-works/pi-tui";
+
 const MASK_OPEN = "\uE000";
 const MASK_CLOSE = "\uE001";
 const LITERAL_LBRACE = "\uE100";
@@ -756,22 +758,8 @@ function renderMath(raw: string): string {
   return rendered || raw;
 }
 
-function markdownCodeSpan(text: string): string {
-  const longestBacktickRun = Math.max(
-    0,
-    ...Array.from(text.matchAll(/`+/g), (match) => match[0].length),
-  );
-  const fence = "`".repeat(longestBacktickRun + 1);
-  const padding = text.startsWith("`") || text.endsWith("`") ? " " : "";
-  return `${fence}${padding}${text}${padding}${fence}`;
-}
-
-function mathPill(rendered: string): string {
-  return markdownCodeSpan(rendered);
-}
-
 function renderInlineMath(raw: string): string {
-  return mathPill(renderMath(raw));
+  return renderMath(raw);
 }
 
 function renderDisplayMath(raw: string): string {
@@ -781,11 +769,7 @@ function renderDisplayMath(raw: string): string {
     .filter(Boolean);
   if (lines.length === 0) return "";
 
-  if (lines.length === 1) {
-    return `\n> ${mathPill(lines[0])}\n`;
-  }
-
-  return `\n${lines.map((line) => `> ${mathPill(line)}`).join("\n")}\n`;
+  return `\n${lines.join("\n")}\n`;
 }
 
 function convertDelimitedMath(markdown: string): string {
@@ -819,5 +803,74 @@ export function renderTerminalLatex(markdown: string): string {
   const masked = maskProtectedMarkdown(markdown, protectedRegions);
   const converted = convertDelimitedMath(masked);
   return restoreMarkdownRegions(converted, protectedRegions);
+}
+
+type MarkdownRuntime = {
+  text?: string;
+  defaultTextStyle?: DefaultTextStyle;
+};
+
+type MarkdownRender = (this: Markdown, width: number) => string[];
+
+type MarkdownLatexPatchState = {
+  originalRender: MarkdownRender;
+  shouldRender: () => boolean;
+};
+
+const MARKDOWN_LATEX_PATCH = Symbol.for(
+  "pi-learning-tutor.markdown-latex-render-patch",
+);
+
+function shouldSkipMarkdownLatex(component: MarkdownRuntime): boolean {
+  const style = component.defaultTextStyle;
+  // Thinking blocks, user messages, and custom messages pass a default style.
+  // Leave those untouched so hidden/dim thinking stays visually distinct and
+  // user-provided code/path snippets are not changed by a render-only helper.
+  return Boolean(style);
+}
+
+export async function installTerminalLatexMarkdownRenderer(
+  shouldRender: () => boolean,
+): Promise<void> {
+  const { Markdown: MarkdownComponent } = await import("@earendil-works/pi-tui");
+  const prototype = MarkdownComponent.prototype as typeof Markdown.prototype & {
+    [MARKDOWN_LATEX_PATCH]?: MarkdownLatexPatchState;
+  };
+
+  const existingPatch = prototype[MARKDOWN_LATEX_PATCH];
+  if (existingPatch) {
+    existingPatch.shouldRender = shouldRender;
+    return;
+  }
+
+  const patchState: MarkdownLatexPatchState = {
+    originalRender: prototype.render,
+    shouldRender,
+  };
+
+  prototype[MARKDOWN_LATEX_PATCH] = patchState;
+  prototype.render = function renderWithTerminalLatex(width: number): string[] {
+    const component = this as unknown as MarkdownRuntime;
+    const sourceText = component.text;
+    if (
+      !patchState.shouldRender() ||
+      typeof sourceText !== "string" ||
+      shouldSkipMarkdownLatex(component)
+    ) {
+      return patchState.originalRender.call(this, width);
+    }
+
+    const renderedText = renderTerminalLatex(sourceText);
+    if (renderedText === sourceText) {
+      return patchState.originalRender.call(this, width);
+    }
+
+    component.text = renderedText;
+    try {
+      return patchState.originalRender.call(this, width);
+    } finally {
+      component.text = sourceText;
+    }
+  };
 }
 

@@ -15,7 +15,7 @@ import {
   uninstallSelectionDefineSupport,
 } from "./src/definition.js";
 import { detectCurrentLanguage } from "./src/language.js";
-import { renderTerminalLatex } from "./src/latex.js";
+import { installTerminalLatexMarkdownRenderer } from "./src/latex.js";
 import {
   broadReviewPrompt,
   exerciseRequestPrompt,
@@ -41,9 +41,13 @@ import {
 } from "./src/tool-gates.js";
 import type { LearningState } from "./src/types.js";
 
-export default function learningTutorExtension(pi: ExtensionAPI): void {
+export default async function learningTutorExtension(
+  pi: ExtensionAPI,
+): Promise<void> {
   let state: LearningState = cloneState(DEFAULT_STATE);
   let selectionSupport: SelectionSupport | undefined;
+
+  await installTerminalLatexMarkdownRenderer(() => state.active);
 
   function enableSelectionSupport(ctx: ExtensionContext): void {
     if (!ENABLE_MOUSE_SELECTION_CAPTURE) {
@@ -291,28 +295,6 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
         detectCurrentLanguage(ctx.cwd),
       )}`,
     };
-  });
-
-  pi.on("message_end", async (event) => {
-    if (!state.active || event.message.role !== "assistant") return;
-
-    let changed = false;
-    const content = event.message.content.map((part: any) => {
-      if (part?.type === "text" && typeof part.text === "string") {
-        const text = renderTerminalLatex(part.text);
-        if (text !== part.text) changed = true;
-        return text === part.text ? part : { ...part, text };
-      }
-      if (part?.type === "thinking" && typeof part.thinking === "string") {
-        const thinking = renderTerminalLatex(part.thinking);
-        if (thinking !== part.thinking) changed = true;
-        return thinking === part.thinking ? part : { ...part, thinking };
-      }
-      return part;
-    });
-
-    if (!changed) return;
-    return { message: { ...event.message, content } };
   });
 
   pi.on("context", async (event) => {
