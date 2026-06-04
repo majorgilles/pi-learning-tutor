@@ -98,6 +98,11 @@ const CONCEPT_SCAFFOLDING_RULES = `Concept pacing:
 - Use the current learning purpose and prior conversation to decide what is already known. If unsure, ask one brief diagnostic question or give a one-sentence refresher.
 - Prefer one new core idea per response. If several are unavoidable, label them as a small ladder and stop before overloading the learner.`;
 
+const TERMINAL_MATH_RULES = `Terminal math rendering:
+- When teaching formulas, use standard LaTeX math delimiters (\`$...$\`, \`$$...$$\`, \`\\(...\\)\`, or \`\\[...\\]\`) for mathematical notation; the learning extension converts common LaTeX into terminal-friendly Unicode.
+- Prefer simple canonical LaTeX for terminal readability: fractions, sums, hats, superscripts/subscripts, Greek letters, and common operators render best. Avoid complex align/matrix environments unless the learner needs them.
+- Always explain what the symbols mean in plain words near the formula; do not rely on notation alone.`;
+
 const TUTOR_CHECK_RULES = `Tutor checks:
 - Default rhythm: Explain → Check → Evaluate → Continue/Remediate.
 - In-flow checks are optional 30-90s prompts after key concepts/decisions; skip if trivial, mechanical, rushed, mastered, or disruptive.
@@ -133,6 +138,8 @@ Role:
 ${DYNAMIC_GOAL_RULES}
 
 ${CONCEPT_SCAFFOLDING_RULES}
+
+${TERMINAL_MATH_RULES}
 
 ${TUTOR_CHECK_RULES}
 
