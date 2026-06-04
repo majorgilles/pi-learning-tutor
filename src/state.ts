@@ -35,7 +35,7 @@ export function cloneState(state: LearningState): LearningState {
 
 export function restoreState(ctx: ExtensionContext): LearningState {
   const latest = ctx.sessionManager
-    .getEntries()
+    .getBranch()
     .filter(
       (entry: any) =>
         entry?.type === "custom" && entry.customType === STATE_ENTRY_TYPE,

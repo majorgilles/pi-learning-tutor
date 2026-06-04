@@ -148,6 +148,14 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
   pi.registerCommand("learn", {
     description:
       "Start learning mode with initial context; turn it off with /learn off",
+    getArgumentCompletions(argumentPrefix: string) {
+      const prefix = argumentPrefix.toLowerCase();
+      const items = [
+        { value: "off", label: "off", description: "Disable learning mode" },
+      ];
+      if (!prefix) return items;
+      return items.filter((item) => item.value.startsWith(prefix));
+    },
     handler: async (args, ctx) => {
       const trimmed = args.trim();
       if (trimmed.toLowerCase() === LEARN_OFF_COMMAND) {
