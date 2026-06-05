@@ -62,7 +62,7 @@ While learning mode is active, the extension:
 - keeps all external/research tools available (for example web/code search, fetch tools, MCP tools, `gh`, `curl`, or small URL-fetch scripts) without requiring extra permission,
 - blocks `edit`, `write`, and mutating bash commands by default, while allowing user-requested comment-only edits that add/refine explanations without changing executable code,
 - transforms readiness signals like `done`, `review`, or `I tried it` into review prompts,
-- asks the assistant to inspect relevant files/diffs before reviewing, so feedback stays grounded in the learner's actual attempt,
+- treats each new learner message as a possible progress signal; when it plausibly reflects code/work changes, asks the assistant to inspect bounded git status/diff, referenced files, or errors before reviewing the actual changes,
 - supports `/define` and `ctrl+shift+d` definition overlays,
 - leaves native terminal mouse selection/scrollback behavior alone by default, and
 - supports `/act <request>` as a fire-and-forget escape hatch for broader scoped code changes.
