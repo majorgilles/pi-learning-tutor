@@ -43,6 +43,10 @@ pi -e npm:@majorgilles/pi-learning-tutor
 - `/define [text]` — show a definition in an overlay without adding it to main chat context. With no text, reads the clipboard first, then prompts if the clipboard is unavailable/empty.
 - `/act <request>` — immediately ask the assistant to make a scoped code change.
 
+## Review trigger keyword
+
+When the tutor asks you to produce something for the current step (code/file changes, command output, a quick-check answer, notes, or an exercise artifact), it should clearly tell you to type plain `review` to trigger `[LEARNER READY FOR REVIEW]`. The extension also accepts readiness phrases like `done` or `I tried it`, but `review` is the visible learner-facing keyword. Explanation-only steps should not show the trigger note.
+
 ## Internal tool
 
 - `learning_goal` — lets the tutor update the visible learning purpose with the concise why-level goal inferred from the current discussion.
@@ -61,7 +65,7 @@ While learning mode is active, the extension:
 - treats `/exercise` as a larger context-aware build challenge command: it should inspect bounded evidence such as recent commits/diffs or the issue at hand, then ask the learner to build a new scoped artifact rather than make one tiny edit,
 - keeps all external/research tools available (for example web/code search, fetch tools, MCP tools, `gh`, `curl`, or small URL-fetch scripts) without requiring extra permission,
 - blocks `edit`, `write`, and mutating bash commands by default, while allowing user-requested comment-only edits that add/refine explanations without changing executable code,
-- transforms readiness signals like `done`, `review`, or `I tried it` into review prompts,
+- transforms readiness signals like plain `review`, `done`, or `I tried it` into `[LEARNER READY FOR REVIEW]` prompts, and only tells the learner about the `review` keyword when the current step asks them to produce something,
 - treats each new learner message as a possible progress signal; when it plausibly reflects code/work changes, asks the assistant to inspect bounded git status/diff, referenced files, or errors before reviewing the actual changes,
 - supports `/define` and `ctrl+shift+d` definition overlays,
 - leaves native terminal mouse selection/scrollback behavior alone by default, and
