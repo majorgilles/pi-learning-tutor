@@ -1,6 +1,6 @@
 import {
   LEARNER_READY_FOR_REVIEW_TAG,
-  REVIEW_READY_SIGNAL_TEXT,
+  REVIEW_READY_LEARNER_NOTE,
 } from "./constants.js";
 import type { LanguageHint, LearningState } from "./types.js";
 
@@ -120,11 +120,13 @@ const CODE_REVIEW_CADENCE_RULES = `Review cadence for learner work:
 - Keep inspection bounded and read-only unless /act is active.`;
 
 const REVIEW_TRIGGER_RULES = `Review trigger signal visibility:
-- Do not require or present one hard-coded review keyword. The learner can send short positive readiness signals such as ${REVIEW_READY_SIGNAL_TEXT}, and similar confirmations, to request review.
-- Include an obvious line such as "When your attempt is ready, send ${REVIEW_READY_SIGNAL_TEXT} to trigger \`${LEARNER_READY_FOR_REVIEW_TAG}\`." if and only if this response asks the learner to produce something for review: a code/file change, command/test output, exercise/build artifact, written answer, quick-check answer, diagram, notes, or any other concrete attempt.
-- Put the line in the same section as the assigned work or quick check, not as a generic closing action footer.
-- Do not include the trigger line when the current step is only explanation, orientation, review feedback, remediation, or a question that does not require a produced artifact.
-- While reviewing a learner signal, include the trigger line only if you assign another concrete production step afterward.`;
+- Do not require or present one hard-coded review keyword, exact phrase list, or the internal ${LEARNER_READY_FOR_REVIEW_TAG} tag to the learner.
+- Infer review readiness from natural learner messages that plausibly mean they finished, tried, changed, answered, or want feedback.
+- If and only if this response asks the learner to produce something for review (a code/file change, command/test output, exercise/build artifact, written answer, quick-check answer, diagram, notes, or any other concrete attempt), include a natural note such as "${REVIEW_READY_LEARNER_NOTE}"
+- Put the note in the same section as the assigned work or quick check, not as a generic closing action footer.
+- Do not include the note when the current step is only explanation, orientation, review feedback, remediation, or a question that does not require a produced artifact.
+- While reviewing a learner signal, include the note only if you assign another concrete production step afterward.
+- Never list the exact trigger phrases or say they trigger ${LEARNER_READY_FOR_REVIEW_TAG}; the extension handles that inference internally.`;
 
 export function learningInstructions(
   state: LearningState,
@@ -174,8 +176,8 @@ Response:
 4. If the latest learner message could reflect code/work changes, start by reviewing the inspected evidence and actual changes; otherwise review, hint, or give a tiny learner-owned step only when it helps, with syntax-highlighted samples when useful.
 5. When the material is hard, include specific encouragement that names the skill being built; avoid empty cheerleading.
 6. Add/skip the quick check using a prominent standalone heading: \`## ✅ Quick Check\` or \`## ⏭️ Quick Check skipped\`.
-7. If and only if this response asks the learner to produce something, make the accepted readiness signals obvious in that same section: sending ${REVIEW_READY_SIGNAL_TEXT} triggers \`${LEARNER_READY_FOR_REVIEW_TAG}\`.
-8. Do not add a standalone \`Next action:\` line or similar forced action footer; close naturally after the review, hint, step, quick check, or review-trigger note.`;
+7. If and only if this response asks the learner to produce something, include a natural review-readiness note in that same section, for example: "${REVIEW_READY_LEARNER_NOTE}" Do not list exact trigger phrases or mention the internal ${LEARNER_READY_FOR_REVIEW_TAG} tag.
+8. Do not add a standalone \`Next action:\` line or similar forced action footer; close naturally after the review, hint, step, quick check, or review-readiness note.`;
 }
 
 export function reviewSignalPrompt(original: string): string {
@@ -183,7 +185,7 @@ export function reviewSignalPrompt(original: string): string {
 
 Signal: ${JSON.stringify(original)}
 
-Before continuing, infer the current why-level learning purpose from the discussion rather than the original /learn text or immediate task, write one plain-language beginner-friendly paragraph of 3-4 short sentences/lines about why this review helps now and later, inspect bounded read-only context (prefer git status/diff plus referenced files or mentioned tests/errors), state what you inspected, then review the actual code changes or concrete learner attempt before giving new teaching. Make the review progressive: good, improve, what changed since the last attempt if visible, and one useful follow-up only if needed. Include prerequisite concepts before any typing step; define mandatory terms before relying on them. If a hard part remains, explain what capability it is building, where it will pay off later, and what "good enough for now" means. Do not add a standalone \`Next action:\` line. Mention the accepted readiness signals only if assigning another concrete production step afterward. If this was a quick-check answer, evaluate it under a clear \`## Quick Check Review\` heading using the tutor-check rules.`;
+Before continuing, infer the current why-level learning purpose from the discussion rather than the original /learn text or immediate task, write one plain-language beginner-friendly paragraph of 3-4 short sentences/lines about why this review helps now and later, inspect bounded read-only context (prefer git status/diff plus referenced files or mentioned tests/errors), state what you inspected, then review the actual code changes or concrete learner attempt before giving new teaching. Make the review progressive: good, improve, what changed since the last attempt if visible, and one useful follow-up only if needed. Include prerequisite concepts before any typing step; define mandatory terms before relying on them. If a hard part remains, explain what capability it is building, where it will pay off later, and what "good enough for now" means. Do not add a standalone \`Next action:\` line. Mention readiness naturally only if assigning another concrete production step afterward, without listing exact trigger phrases or exposing the internal review tag. If this was a quick-check answer, evaluate it under a clear \`## Quick Check Review\` heading using the tutor-check rules.`;
 }
 
 export function startLearningThreadPrompt(context: string): string {
@@ -194,7 +196,7 @@ Context may be any format. Use linked docs/repos/tutorials/issues as a blueprint
 Context:
 ${context}
 
-Treat this context as a starting point, not a fixed goal. Infer an initial why-level learning purpose in learner-facing language: the durable capability or idea behind the immediate topic (for example, loops → doing things repeatedly; one-hot vectors → representing categories as learnable signals). Orient me, and expect that purpose to update as the discussion evolves. Inspect bounded context/resources if useful, explain key concepts slowly in prerequisite order, and give one learner-owned starting step only if it helps. Explain why this first step is worth studying as one beginner-friendly paragraph of 3-4 short sentences/lines: what I am doing, what the important words mean, why it helps now, and where future me will reuse it. Tie any hard part to what it unlocks, define mandatory terms before using downstream terms, and use specific encouragement rather than generic cheerleading. Add a quick check only if it helps; if included, make it a standalone \`## ✅ Quick Check\` section. If the starting step or quick check asks me to produce something, make it obvious that sending ${REVIEW_READY_SIGNAL_TEXT} triggers \`${LEARNER_READY_FOR_REVIEW_TAG}\`; otherwise do not include that trigger note. Do not close with a standalone \`Next action:\` line.`;
+Treat this context as a starting point, not a fixed goal. Infer an initial why-level learning purpose in learner-facing language: the durable capability or idea behind the immediate topic (for example, loops → doing things repeatedly; one-hot vectors → representing categories as learnable signals). Orient me, and expect that purpose to update as the discussion evolves. Inspect bounded context/resources if useful, explain key concepts slowly in prerequisite order, and give one learner-owned starting step only if it helps. Explain why this first step is worth studying as one beginner-friendly paragraph of 3-4 short sentences/lines: what I am doing, what the important words mean, why it helps now, and where future me will reuse it. Tie any hard part to what it unlocks, define mandatory terms before using downstream terms, and use specific encouragement rather than generic cheerleading. Add a quick check only if it helps; if included, make it a standalone \`## ✅ Quick Check\` section. If the starting step or quick check asks me to produce something, include a natural note that I can tell you in my own words when it is ready for review; otherwise do not include that readiness note. Do not list exact trigger phrases or expose the internal review tag. Do not close with a standalone \`Next action:\` line.`;
 }
 
 export function exerciseRequestPrompt(topic: string): string {
@@ -209,7 +211,7 @@ Use bounded evidence (recent commits/diffs/status, issue/context, resources, con
 
 Not a tiny drill, short question, prediction, or one-line edit.
 
-Include: evidence used, inferred learning purpose, one beginner-friendly now/later paragraph of 3-4 short sentences/lines about why this challenge is useful, concept ladder/prerequisites assessed, why they matter, the hard part this challenge practices, constraints, target outcome, milestones, success criteria, and hints. Do not assess downstream terms until the required earlier concepts are clear. If resources exist, adapt their relevant pattern to this project. End with an open invitation to build/share whatever is useful for review, and make it obvious that sending ${REVIEW_READY_SIGNAL_TEXT} triggers \`${LEARNER_READY_FOR_REVIEW_TAG}\` when the build artifact is ready; no rigid template or closed fields like "Ready for review", "What I built", or "Files I changed". No solution unless I get stuck after a retry.`;
+Include: evidence used, inferred learning purpose, one beginner-friendly now/later paragraph of 3-4 short sentences/lines about why this challenge is useful, concept ladder/prerequisites assessed, why they matter, the hard part this challenge practices, constraints, target outcome, milestones, success criteria, and hints. Do not assess downstream terms until the required earlier concepts are clear. If resources exist, adapt their relevant pattern to this project. End with an open invitation to build/share whatever is useful for review, and say the learner can tell you in their own words when the build artifact is ready; no exact trigger phrase list, no internal review tag, and no rigid template or closed labeled fields. No solution unless I get stuck after a retry.`;
 }
 
 export function broadReviewPrompt(scope: string): string {

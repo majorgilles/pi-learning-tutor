@@ -15,7 +15,7 @@
    - Block mutating bash commands; allow bounded local inspection and full external/research tool access.
 
 3. **Learner-signal review loop**
-   - Detect readiness signals like `done`, `review`, `I tried it`.
+   - Infer natural readiness/progress messages without requiring a visible hard-coded phrase.
    - Transform them into review instructions for the tutor.
    - Guide the tutor to inspect `git status`, `git diff`, and relevant files before giving the next step.
 
