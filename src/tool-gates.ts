@@ -5,7 +5,7 @@ import { textFromMessage } from "./conversation.js";
 import type { CommentSyntax } from "./types.js";
 
 export const READINESS_RE =
-  /^\s*(done|review|ready|i\s+tried\s+it|i\s+changed\s+it|take\s+a\s+look|please\s+review|here'?s\s+my\s+attempt)\b/i;
+  /^\s*(?:(?:ok(?:ay)?|done|ready|review|yes|yep|yeah|sure|sounds\s+good|got\s+it|finished|complete(?:d)?|all\s+set|i\s+tried\s+it|i\s+changed\s+it|take\s+a\s+look|please\s+review|here'?s\s+my\s+attempt)\b|(?:what(?:'|’)?s|what\s+is|what\s+should\s+i\s+do|what\s+do\s+i\s+do)\s+next\b|now\s+what\b)/i;
 
 const COMMENT_TARGET_RE =
   /\b(comment(?:s|ary|ing)?|annotat(?:e|ed|ing|ion|ions)|doc(?:s|umentation|string)s?|javadocs?|jsdocs?|inline\s+notes?|explanatory\s+notes?)\b/i;
