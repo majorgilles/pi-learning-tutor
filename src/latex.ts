@@ -53,16 +53,31 @@ function latexToTerminalText(source: string): string {
     .trim();
 }
 
+function escapeInlineCode(text: string): string {
+  return text.replace(/`/g, "ˋ");
+}
+
+function formatDisplayFormula(formula: string): string {
+  const text = escapeInlineCode(latexToTerminalText(formula));
+  if (!text) return "";
+  return `\n> **Formula**\n> \`${text}\`\n`;
+}
+
+function formatInlineFormula(formula: string): string {
+  const text = escapeInlineCode(latexToTerminalText(formula));
+  return text ? `\`${text}\`` : "";
+}
+
 function sanitizeMathInMarkdownText(text: string): string {
   return text
     .replace(/\$\$\s*([\s\S]*?)\s*\$\$/g, (_match, formula: string) =>
-      `\n${latexToTerminalText(formula)}\n`,
+      formatDisplayFormula(formula),
     )
     .replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, (_match, formula: string) =>
-      `\n${latexToTerminalText(formula)}\n`,
+      formatDisplayFormula(formula),
     )
     .replace(/\\\(\s*([\s\S]*?)\s*\\\)/g, (_match, formula: string) =>
-      latexToTerminalText(formula),
+      formatInlineFormula(formula),
     );
 }
 
