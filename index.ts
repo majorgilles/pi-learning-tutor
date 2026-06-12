@@ -14,7 +14,7 @@ import {
   type SelectionSupport,
   uninstallSelectionDefineSupport,
 } from "./src/definition.js";
-import { sanitizeLatexForTerminalMarkdown } from "./src/latex.js";
+import { sanitizeAssistantMarkdown } from "./src/markdown.js";
 import { detectCurrentLanguage } from "./src/language.js";
 import {
   broadReviewPrompt,
@@ -310,14 +310,14 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
     const sanitizedContent = Array.isArray(content)
       ? content.map((part: any) => {
           if (part?.type !== "text" || typeof part.text !== "string") return part;
-          const sanitizedText = sanitizeLatexForTerminalMarkdown(part.text);
+          const sanitizedText = sanitizeAssistantMarkdown(part.text);
           if (sanitizedText === part.text) return part;
           changed = true;
           return { ...part, text: sanitizedText };
         })
       : typeof content === "string"
         ? (() => {
-            const sanitizedText = sanitizeLatexForTerminalMarkdown(content);
+            const sanitizedText = sanitizeAssistantMarkdown(content);
             changed = sanitizedText !== content;
             return sanitizedText;
           })()
