@@ -62,7 +62,7 @@ While learning mode is active, the extension:
 - offers small learner-owned steps only when useful, without a forced `Next action:` footer,
 - introduces new terms through a short prerequisite ladder, defining mandatory concepts before relying on downstream jargon (for example, prediction/error before loss/gradient in basic ML),
 - adds lightweight 30–90 second quick checks after key concepts when useful, renders them as prominent standalone `## ✅ Quick Check` sections, evaluates learner answers supportively, and uses a visible skip note when checks would interrupt flow,
-- keeps Markdown lessons readable by rendering headings/prose directly, keeping language code fences top-level so syntax highlighting works, and avoiding nested triple-backtick Markdown fences,
+- keeps Markdown lessons readable by rendering headings/prose directly, keeping language code fences top-level so syntax highlighting works, using standalone `$$` blocks for display LaTeX formulas without asking for a terminal refresh/reload, and avoiding nested triple-backtick Markdown fences,
 - treats `/exercise` as a larger context-aware build challenge command: it should inspect bounded evidence such as recent commits/diffs or the issue at hand, then ask the learner to build a new scoped artifact rather than make one tiny edit,
 - keeps all external/research tools available (for example web/code search, fetch tools, MCP tools, `gh`, `curl`, or small URL-fetch scripts) without requiring extra permission,
 - blocks `edit`, `write`, and mutating bash commands by default, while allowing user-requested comment-only edits that add/refine explanations without changing executable code,
