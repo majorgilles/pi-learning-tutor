@@ -41,9 +41,30 @@ import {
 } from "./src/tool-gates.js";
 import type { LearningState } from "./src/types.js";
 
+const LEARNING_GOAL_TOOL_NAME = "learning_goal";
+
 export default function learningTutorExtension(pi: ExtensionAPI): void {
   let state: LearningState = cloneState(DEFAULT_STATE);
   let selectionSupport: SelectionSupport | undefined;
+
+  function syncLearningGoalTool(active: boolean): void {
+    const activeTools = pi.getActiveTools();
+    const hasLearningGoalTool = activeTools.includes(LEARNING_GOAL_TOOL_NAME);
+
+    if (active && !hasLearningGoalTool) {
+      pi.setActiveTools([
+        ...activeTools,
+        LEARNING_GOAL_TOOL_NAME,
+      ]);
+      return;
+    }
+
+    if (!active && hasLearningGoalTool) {
+      pi.setActiveTools(
+        activeTools.filter((toolName) => toolName !== LEARNING_GOAL_TOOL_NAME),
+      );
+    }
+  }
 
   function enableSelectionSupport(ctx: ExtensionContext): void {
     if (!ENABLE_MOUSE_SELECTION_CAPTURE) {
@@ -72,6 +93,7 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
       workingGoal: undefined,
       editMode: { phase: "off" },
     };
+    syncLearningGoalTool(true);
     enableSelectionSupport(ctx);
     updateStatus(ctx, state);
     persist(pi, state);
@@ -79,6 +101,7 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
 
   function disableLearning(ctx: ExtensionContext): void {
     state = { ...state, active: false, editMode: { phase: "off" } };
+    syncLearningGoalTool(false);
     disableSelectionSupport(ctx);
     updateStatus(ctx, state);
     persist(pi, state);
@@ -95,7 +118,10 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
       persist(pi, state);
     }
     if (state.active) {
+      syncLearningGoalTool(true);
       enableSelectionSupport(ctx);
+    } else {
+      syncLearningGoalTool(false);
     }
     updateStatus(ctx, state);
   });
@@ -105,7 +131,7 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
   });
 
   pi.registerTool({
-    name: "learning_goal",
+    name: LEARNING_GOAL_TOOL_NAME,
     label: "Learning Purpose",
     description:
       "Update the visible why-level learning purpose for the active learning-tutor thread.",
@@ -266,11 +292,14 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
   });
 
   pi.on("input", async (event) => {
-    if (
-      !state.active ||
-      event.source === "extension" ||
-      event.text.trim().startsWith("/")
-    ) {
+    if (!state.active) {
+      syncLearningGoalTool(false);
+      return { action: "continue" };
+    }
+
+    syncLearningGoalTool(true);
+
+    if (event.source === "extension" || event.text.trim().startsWith("/")) {
       return { action: "continue" };
     }
 
@@ -284,7 +313,11 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
   });
 
   pi.on("before_agent_start", async (event, ctx) => {
-    if (!state.active) return;
+    if (!state.active) {
+      syncLearningGoalTool(false);
+      return;
+    }
+    syncLearningGoalTool(true);
     return {
       systemPrompt: `${event.systemPrompt}\n\n${learningInstructions(
         state,
