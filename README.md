@@ -49,13 +49,13 @@ When the tutor asks you to produce something for the current step (code/file cha
 
 ## Internal tool
 
-- `learning_goal` — lets the tutor update the visible learning purpose with the concise why-level goal inferred from the current discussion.
+- `learning_goal` — lets the tutor update the visible learning purpose with the concise why-level goal inferred from the current discussion. The extension keeps this tool active only while learning mode is on and removes it from the active tool set when `/learn off` is used.
 
 ## Behavior
 
 While learning mode is active, the extension:
 
-- injects tutor-mode instructions into the agent context,
+- injects tutor-mode instructions into the agent context and keeps the learning-only `learning_goal` tool disabled outside learning mode,
 - treats `/learn` text as starting context rather than a fixed goal,
 - recognizes obvious primary resources in `/learn` input, including bare/exact URLs, tutorial links, and document paths such as PDFs; it should fetch/read/parse the exact resource first, preserve the source order, terminology, examples, notation, and exercises, and clearly label any supplemental adaptation instead of substituting a generic lesson,
 - keeps the concise why-level learning purpose visible as the conversation evolves, abstracting one level above the immediate task (for example, loops → doing things repeatedly; one-hot vectors → machine-learnable representations) and uses a 3–4 line plain-language paragraph to define important task words, explain why the current step helps now, and show where the learner will reuse it later,
