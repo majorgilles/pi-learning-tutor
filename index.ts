@@ -14,7 +14,6 @@ import {
   type SelectionSupport,
   uninstallSelectionDefineSupport,
 } from "./src/definition.js";
-import { sanitizeLatexForTerminalMarkdown } from "./src/latex.js";
 import { detectCurrentLanguage } from "./src/language.js";
 import {
   broadReviewPrompt,
@@ -333,31 +332,6 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
     );
     if (messages.length === event.messages.length) return;
     return { messages };
-  });
-
-  (pi.on as any)("message_end", async (event: any) => {
-    if (!state.active || event.message.role !== "assistant") return;
-
-    let changed = false;
-    const content = event.message.content;
-    const sanitizedContent = Array.isArray(content)
-      ? content.map((part: any) => {
-          if (part?.type !== "text" || typeof part.text !== "string") return part;
-          const sanitizedText = sanitizeLatexForTerminalMarkdown(part.text);
-          if (sanitizedText === part.text) return part;
-          changed = true;
-          return { ...part, text: sanitizedText };
-        })
-      : typeof content === "string"
-        ? (() => {
-            const sanitizedText = sanitizeLatexForTerminalMarkdown(content);
-            changed = sanitizedText !== content;
-            return sanitizedText;
-          })()
-        : content;
-
-    if (!changed) return;
-    return { message: { ...event.message, content: sanitizedContent } };
   });
 
   pi.on("tool_call", async (event, ctx) => {
