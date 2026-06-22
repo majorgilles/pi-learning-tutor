@@ -302,8 +302,12 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
     return { messages };
   });
 
+  // LaTeX display blocks ($$...$$) and \[...\]/\(...\) math can't be rendered by
+  // the terminal markdown renderer, so sanitize every assistant message into
+  // readable plain text/Unicode. This is intentionally not gated on learning
+  // mode: math shows up in normal sessions too.
   (pi.on as any)("message_end", async (event: any) => {
-    if (!state.active || event.message.role !== "assistant") return;
+    if (event.message.role !== "assistant") return;
 
     let changed = false;
     const content = event.message.content;
