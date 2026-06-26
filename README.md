@@ -37,7 +37,7 @@ pi -e npm:@majorgilles/pi-learning-tutor
 ## Commands
 
 - `/learn <anything>` — start learning mode with arbitrary starting context; the why-level learning purpose is inferred and updated through the discussion. If the context is an obvious primary resource such as a book/chapter PDF or exact tutorial link, the tutor reads that resource and follows it faithfully as the main lesson path.
-- `/learn off` — leave learning mode. This is the only stop command; plain positive readiness/progress messages remain review signals while learning mode is active.
+- `/learn off` — leave learning mode and clear all learning-tutor traces: the learning-only `learning_goal` tool is removed, the status/widget is cleared, and all accumulated learning context (goal, working purpose, steps, exercises, review signals, progress notes, and edit-mode state) is reset so nothing lingers or carries into a later `/learn <anything>`. This is the only stop command; plain positive readiness/progress messages remain review signals while learning mode is active.
 - `/exercise [topic]` — generate a context-calibrated build challenge based on the current learning context, recent commits/diffs, or issue/resources; no solution up front.
 - `/review [scope]` — request a broader learning review.
 - `/define [text]` — show a definition in an overlay without adding it to main chat context. With no text, reads the clipboard first, then prompts if the clipboard is unavailable/empty.
@@ -49,7 +49,7 @@ When the tutor asks you to produce something for the current step (code/file cha
 
 ## Internal tool
 
-- `learning_goal` — lets the tutor update the visible learning purpose with the concise why-level goal inferred from the current discussion. The extension keeps this tool active only while learning mode is on and removes it from the active tool set when `/learn off` is used.
+- `learning_goal` — lets the tutor update the visible learning purpose with the concise why-level goal inferred from the current discussion. The extension keeps this tool active only while learning mode is on and removes it from the active tool set when `/learn off` is used, which also resets all other learning-tutor state.
 
 ## Behavior
 
