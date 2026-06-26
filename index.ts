@@ -100,7 +100,13 @@ export default function learningTutorExtension(pi: ExtensionAPI): void {
   }
 
   function disableLearning(ctx: ExtensionContext): void {
-    state = { ...state, active: false, editMode: { phase: "off" } };
+    // Fully reset to a clean default so `/learn off` leaves no traces:
+    // the learning-only tool is removed, selection capture is torn down,
+    // the status/widget is cleared, and all accumulated learning context
+    // (goal, working goal, steps, exercises, review signals, progress notes,
+    // edit-mode state) is dropped instead of lingering or carrying into a
+    // later `/learn <anything>`.
+    state = cloneState(DEFAULT_STATE);
     syncLearningGoalTool(false);
     disableSelectionSupport(ctx);
     updateStatus(ctx, state);
