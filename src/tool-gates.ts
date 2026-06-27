@@ -82,11 +82,69 @@ function firstWord(text: string): string {
   return text.trim().split(/\s+/, 1)[0]?.toLowerCase() ?? "";
 }
 
-function shellSegments(command: string): string[] {
-  return command
-    .split(/&&|\|\||;|\n/)
-    .map((segment) => segment.trim())
-    .filter(Boolean);
+/**
+ * Split a shell command into its individual command invocations across
+ * pipelines (`|`) and sequences (`&&`, `||`, `;`, newline), while respecting
+ * single/double quoting and backslash escaping.
+ *
+ * This matters because separators often appear *inside* quoted arguments,
+ * most notably in `grep`/`rg`/`awk` regexes such as `grep "a\|b" file` (BRE
+ * alternation) or `grep -E "a|b" file` (ERE alternation). A naive split on
+ * `|` would chop those arguments apart and leave fragments whose first token
+ * is not a recognized read-only command, which would make the gate wrongly
+ * treat an innocent read-only grep as a mutating command.
+ */
+function splitShellCommands(command: string): string[] {
+  const commands: string[] = [];
+  let current = "";
+  let inSingle = false;
+  let inDouble = false;
+
+  const flush = (): void => {
+    const segment = current.trim();
+    if (segment) commands.push(segment);
+    current = "";
+  };
+
+  for (let i = 0; i < command.length; i++) {
+    const char = command[i];
+    const next = command[i + 1];
+
+    // Outside single quotes, a backslash escapes the next character so that
+    // quoted/escaped separators (e.g. a regex `\|`) are not seen as operators.
+    if (char === "\\" && !inSingle) {
+      current += next !== undefined ? char + next : char;
+      i += 1;
+      continue;
+    }
+
+    if (char === "'" && !inDouble) {
+      inSingle = !inSingle;
+      current += char;
+      continue;
+    }
+    if (char === '"' && !inSingle) {
+      inDouble = !inDouble;
+      current += char;
+      continue;
+    }
+
+    if (!inSingle && !inDouble) {
+      if ((char === "&" && next === "&") || (char === "|" && next === "|")) {
+        flush();
+        i += 1; // consume the second character of the two-char operator
+        continue;
+      }
+      if (char === "|" || char === ";" || char === "\n") {
+        flush();
+        continue;
+      }
+    }
+
+    current += char;
+  }
+  flush();
+  return commands;
 }
 
 function tokenize(segment: string): string[] {
@@ -141,66 +199,64 @@ export function isProbablyReadOnlyBash(command: string): boolean {
     /\b(rm|mv|cp|mkdir|rmdir|touch|chmod|chown|sudo|kill|pkill|reboot|shutdown|npm\s+install|pnpm\s+add|yarn\s+add|cargo\s+add|cargo\s+install|pip\s+install|sed\s+-i|perl\s+-pi|git\s+(add|commit|push|checkout|switch|reset|merge|rebase|apply|stash|clean|restore)|gh\s+(issue|pr)\s+(create|edit|close|reopen|comment|merge)|curl\s+.*\|\s*(sh|bash)|wget\s+.*\|\s*(sh|bash))\b/i;
   if (mutatingPattern.test(trimmed)) return false;
 
-  for (const segment of shellSegments(trimmed)) {
-    // Pipelines are allowed only when each command in the pipeline is read-only.
-    for (const part of segment
-      .split("|")
-      .map((p) => p.trim())
-      .filter(Boolean)) {
-      const tokens = tokenize(part);
-      const cmd = firstWord(part);
-      if (!cmd) continue;
-      if (
-        [
-          "pwd",
-          "ls",
-          "cat",
-          "head",
-          "tail",
-          "less",
-          "more",
-          "wc",
-          "sort",
-          "uniq",
-          "cut",
-          "awk",
-          "jq",
-          "rg",
-          "grep",
-          "find",
-          "tree",
-          "du",
-          "df",
-          "echo",
-          "printf",
-          "curl",
-          "wget",
-        ].includes(cmd)
+  // Split into individual commands across pipelines (`|`) and sequences
+  // (`&&`, `||`, `;`, newline), respecting shell quoting and escapes so that
+  // separators inside quoted/escaped arguments (e.g. a grep BRE regex like
+  // `"a\|b"` or an ERE like `-E "a|b"`) are not mistaken for operators.
+  for (const part of splitShellCommands(trimmed)) {
+    const tokens = tokenize(part);
+    const cmd = firstWord(part);
+    if (!cmd) continue;
+    if (
+      [
+        "pwd",
+        "ls",
+        "cat",
+        "head",
+        "tail",
+        "less",
+        "more",
+        "wc",
+        "sort",
+        "uniq",
+        "cut",
+        "awk",
+        "jq",
+        "rg",
+        "grep",
+        "find",
+        "tree",
+        "du",
+        "df",
+        "echo",
+        "printf",
+        "curl",
+        "wget",
+      ].includes(cmd)
+    )
+      continue;
+    if (cmd === "git" && isReadOnlyGit(tokens)) continue;
+    if (cmd === "gh" && isReadOnlyGh(tokens)) continue;
+    if (
+      ["npm", "pnpm", "yarn"].includes(cmd) &&
+      tokens.some((t) => ["test", "run"].includes(t))
+    )
+      continue;
+    if (
+      cmd === "cargo" &&
+      tokens.some((t) =>
+        ["test", "check", "build", "clippy", "fmt"].includes(t),
       )
-        continue;
-      if (cmd === "git" && isReadOnlyGit(tokens)) continue;
-      if (cmd === "gh" && isReadOnlyGh(tokens)) continue;
-      if (
-        ["npm", "pnpm", "yarn"].includes(cmd) &&
-        tokens.some((t) => ["test", "run"].includes(t))
-      )
-        continue;
-      if (
-        cmd === "cargo" &&
-        tokens.some((t) =>
-          ["test", "check", "build", "clippy", "fmt"].includes(t),
-        )
-      )
-        continue;
-      if (
-        cmd === "python" ||
-        cmd === "python3" ||
-        cmd === "node" ||
-        cmd === "bun"
-      )
-        continue;
-      return false;
-    }
+    )
+      continue;
+    if (
+      cmd === "python" ||
+      cmd === "python3" ||
+      cmd === "node" ||
+      cmd === "bun"
+    )
+      continue;
+    return false;
   }
   return true;
 }
