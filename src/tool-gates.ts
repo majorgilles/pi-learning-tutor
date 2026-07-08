@@ -78,8 +78,122 @@ const SQL_COMMENT_EXTENSIONS = new Set([".sql"]);
 const LUA_COMMENT_EXTENSIONS = new Set([".lua"]);
 const HASKELL_COMMENT_EXTENSIONS = new Set([".hs", ".lhs"]);
 
-function firstWord(text: string): string {
-  return text.trim().split(/\s+/, 1)[0]?.toLowerCase() ?? "";
+type HereDocMarker = { delimiter: string; stripTabs: boolean };
+
+const SHELL_ASSIGNMENT_RE = /^[A-Za-z_][A-Za-z0-9_]*=.*$/;
+
+function parseHereDocMarker(
+  line: string,
+  operatorIndex: number,
+): { marker: HereDocMarker; nextIndex: number } | undefined {
+  let index = operatorIndex + 2;
+  let stripTabs = false;
+
+  if (line[index] === "-") {
+    stripTabs = true;
+    index++;
+  }
+
+  while (index < line.length && /\s/.test(line[index])) index++;
+  if (index >= line.length) return undefined;
+
+  let delimiter = "";
+  const quote = line[index];
+  if (quote === "'" || quote === '"') {
+    index++;
+    while (index < line.length && line[index] !== quote) {
+      delimiter += line[index];
+      index++;
+    }
+    if (line[index] === quote) index++;
+  } else {
+    while (
+      index < line.length &&
+      !/\s/.test(line[index]) &&
+      !/[;&|()<>]/.test(line[index])
+    ) {
+      if (line[index] === "\\" && index + 1 < line.length) {
+        index++;
+        delimiter += line[index];
+        index++;
+        continue;
+      }
+      delimiter += line[index];
+      index++;
+    }
+  }
+
+  if (!delimiter) return undefined;
+  return { marker: { delimiter, stripTabs }, nextIndex: index };
+}
+
+function extractHereDocMarkers(line: string): HereDocMarker[] {
+  const markers: HereDocMarker[] = [];
+  let inSingle = false;
+  let inDouble = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const next = line[i + 1];
+
+    if (char === "\\" && !inSingle) {
+      i += 1;
+      continue;
+    }
+    if (char === "'" && !inDouble) {
+      inSingle = !inSingle;
+      continue;
+    }
+    if (char === '"' && !inSingle) {
+      inDouble = !inDouble;
+      continue;
+    }
+
+    if (
+      !inSingle &&
+      !inDouble &&
+      char === "<" &&
+      next === "<" &&
+      line[i + 2] !== "<"
+    ) {
+      const parsed = parseHereDocMarker(line, i);
+      if (!parsed) continue;
+      markers.push(parsed.marker);
+      i = parsed.nextIndex - 1;
+    }
+  }
+
+  return markers;
+}
+
+function stripHereDocBodies(command: string): string {
+  const lines = command.split(/\r?\n/);
+  const shellLines: string[] = [];
+  const pendingMarkers: HereDocMarker[] = [];
+
+  for (const line of lines) {
+    const activeMarker = pendingMarkers[0];
+    if (activeMarker) {
+      const candidate = activeMarker.stripTabs
+        ? line.replace(/^\t+/, "")
+        : line;
+      if (candidate === activeMarker.delimiter) pendingMarkers.shift();
+      continue;
+    }
+
+    shellLines.push(line);
+    pendingMarkers.push(...extractHereDocMarkers(line));
+  }
+
+  return shellLines.join("\n");
+}
+
+function stripLeadingShellAssignments(tokens: string[]): string[] {
+  let index = 0;
+  while (index < tokens.length && SHELL_ASSIGNMENT_RE.test(tokens[index])) {
+    index++;
+  }
+  return tokens.slice(index);
 }
 
 /**
@@ -191,24 +305,31 @@ export function isProbablyReadOnlyBash(command: string): boolean {
   const trimmed = command.trim();
   if (!trimmed) return true;
 
+  // Here-doc bodies are stdin payloads for the surrounding command. Strip them
+  // before shell-level safety checks so Python/Node/Bun inspection scripts are
+  // judged by the command invocation rather than by source-code lines inside
+  // the here-doc body.
+  const shellOnly = stripHereDocBodies(trimmed);
+
   // Shell redirection and common write-through helpers mutate files even when paired with read-only commands.
-  if (/(^|[^<])>(>|&)?\s*\S/.test(trimmed) || /\btee\b/.test(trimmed))
+  if (/(^|[^<])>(>|&)?\s*\S/.test(shellOnly) || /\btee\b/.test(shellOnly))
     return false;
 
   const mutatingPattern =
     /\b(rm|mv|cp|mkdir|rmdir|touch|chmod|chown|sudo|kill|pkill|reboot|shutdown|npm\s+install|pnpm\s+add|yarn\s+add|cargo\s+add|cargo\s+install|pip\s+install|sed\s+-i|perl\s+-pi|git\s+(add|commit|push|checkout|switch|reset|merge|rebase|apply|stash|clean|restore)|gh\s+(issue|pr)\s+(create|edit|close|reopen|comment|merge)|curl\s+.*\|\s*(sh|bash)|wget\s+.*\|\s*(sh|bash))\b/i;
-  if (mutatingPattern.test(trimmed)) return false;
+  if (mutatingPattern.test(shellOnly)) return false;
 
   // Split into individual commands across pipelines (`|`) and sequences
   // (`&&`, `||`, `;`, newline), respecting shell quoting and escapes so that
   // separators inside quoted/escaped arguments (e.g. a grep BRE regex like
   // `"a\|b"` or an ERE like `-E "a|b"`) are not mistaken for operators.
-  for (const part of splitShellCommands(trimmed)) {
-    const tokens = tokenize(part);
-    const cmd = firstWord(part);
+  for (const part of splitShellCommands(shellOnly)) {
+    const tokens = stripLeadingShellAssignments(tokenize(part));
+    const cmd = tokens[0]?.toLowerCase() ?? "";
     if (!cmd) continue;
     if (
       [
+        "cd",
         "pwd",
         "ls",
         "cat",
