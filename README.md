@@ -66,7 +66,7 @@ While learning mode is active, the extension:
 - treats `/exercise` as a larger context-aware build challenge command: it should inspect bounded evidence such as recent commits/diffs or the issue at hand, then ask the learner to build a new scoped artifact rather than make one tiny edit,
 - keeps all external/research tools available (for example web/code search, fetch tools, MCP tools, `gh`, `curl`, or small URL-fetch scripts) without requiring extra permission,
 - blocks `edit`, `write`, and mutating bash commands by default, while allowing user-requested comment-only edits that add/refine explanations without changing executable code,
-- recognizes read-only commands even when their arguments contain shell-like separators inside quotes, so `grep`/`rg`/`awk` regexes such as `grep "a\|b" file` or `grep -E "a|b" file` are not mistaken for pipelines and blocked,
+- recognizes read-only commands even when their arguments contain shell-like separators inside quotes, shell-local setup like `cd <repo> && PYTHONIOENCODING=utf-8 python ...`, or Python/Node/Bun here-doc inspection snippets, so notebook/file queries are not mistaken for mutating shell pipelines and blocked,
 - infers natural readiness/progress messages as review requests, transforms them into the internal review prompt, and only mentions review readiness when the current step asks the learner to produce something,
 - treats each new learner message as a possible progress signal; when it plausibly reflects code/work changes, asks the assistant to inspect bounded git status/diff, referenced files, or errors before reviewing the actual changes,
 - supports `/define` and `ctrl+shift+d` definition overlays,
