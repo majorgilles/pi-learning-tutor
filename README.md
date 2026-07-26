@@ -36,7 +36,7 @@ pi -e npm:@majorgilles/pi-learning-tutor
 
 ## Commands
 
-- `/learn <anything>` — start learning mode with arbitrary starting context; the why-level learning purpose is inferred and updated through the discussion. If the context is an obvious primary resource such as a book/chapter PDF or exact tutorial link, the tutor reads that resource and follows it faithfully as the main lesson path.
+- `/learn <anything>` — start learning mode with arbitrary starting context; the why-level learning purpose is inferred and updated through the discussion. Every thread starts with a bounded, read-only look at the working repository as well as the supplied prompt/resource, so the tutor can choose or resume the course section that fits prior work. An obvious primary resource such as a book/chapter PDF or exact tutorial link still defines the main lesson path and order.
 - `/learn off` — leave learning mode and clear all learning-tutor traces: the learning-only `learning_goal` tool is removed, the status/widget is cleared, and all accumulated learning context (goal, working purpose, steps, exercises, review signals, progress notes, and edit-mode state) is reset so nothing lingers or carries into a later `/learn <anything>`. This is the only stop command; plain positive readiness/progress messages remain review signals while learning mode is active.
 - `/exercise [topic]` — generate a context-calibrated build challenge based on the current learning context, recent commits/diffs, or issue/resources; no solution up front.
 - `/review [scope]` — request a broader learning review.
@@ -57,7 +57,8 @@ While learning mode is active, the extension:
 
 - injects tutor-mode instructions into the agent context and keeps the learning-only `learning_goal` tool disabled outside learning mode,
 - treats `/learn` text as starting context rather than a fixed goal,
-- recognizes obvious primary resources in `/learn` input, including bare/exact URLs, tutorial links, and document paths such as PDFs; it should fetch/read/parse the exact resource first, preserve the source order, terminology, examples, notation, and exercises, and clearly label any supplemental adaptation instead of substituting a generic lesson,
+- begins every `/learn` thread with a bounded, read-only orientation of the working repository alongside the supplied prompt/resource: it checks relevant project docs, manifests, implementation/tests, and available Git status/history/diffs to align the selected or resumed course section with work already done, while avoiding broad scans of generated/dependency directories,
+- recognizes obvious primary resources in `/learn` input, including bare/exact URLs, tutorial links, and document paths such as PDFs; it should inspect the exact resource alongside that repository orientation, preserve the source order, terminology, examples, notation, and exercises, and clearly label any supplemental adaptation instead of substituting a generic lesson,
 - keeps the concise why-level learning purpose visible as the conversation evolves, abstracting one level above the immediate task (for example, loops → doing things repeatedly; one-hot vectors → machine-learnable representations) and uses a 3–4 line plain-language paragraph to define important task words, explain why the current step helps now, and show where the learner will reuse it later,
 - offers small learner-owned steps only when useful, without a forced `Next action:` footer,
 - introduces new terms through a short prerequisite ladder, defining mandatory concepts before relying on downstream jargon (for example, prediction/error before loss/gradient in basic ML),
